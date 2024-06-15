@@ -22,7 +22,16 @@ class PickupTask(base.Task):
 
     def before_step(self, action, physics):
         teleop_actions = teleop_handler.get_actions()
-        self.action[:4] = list(teleop_actions.values())
+
+        self.action[:5] = [
+            self.action[0] + teleop_actions['waist_rotation'],
+            self.action[1] + teleop_actions['shoulder_elevation'],
+            self.action[2] + teleop_actions['elbow_elevation'],
+            # Claw has two hinges so claw action must be duplicated.  Model handles inversion of second hinge.
+            # Also clamp claw ctrlrange to match model limitations
+            max(-.4, min(self.action[3] + teleop_actions['gripper_rotation'], .4)),
+            max(-.4, min(self.action[4] + teleop_actions['gripper_rotation'], .4))
+        ]
         physics.set_control(self.action)  # Apply actions to the physics
         super().before_step(self.action, physics)
     def after_step(self, physics):

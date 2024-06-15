@@ -223,6 +223,15 @@ Copyright, 2023, Vilella Kenny.
           </body> <!-- Arm -->
         </body> <!-- Boom -->
       </body> <!-- Chassis -->
+        <body name="left_wheel" pos="-0.5 0 0.1">  <!-- Adjust position as needed -->
+    <geom type="cylinder" size="0.1 0.05" material="rubber"/>  <!-- size as radius, length -->
+    <joint name="left_wheel_joint" type="hinge" axis="0 1 0" limited="false"/>
+</body>
+        <body name="right_wheel" pos="0.5 0 0.1">  <!-- Adjust position as needed -->
+        <geom type="cylinder" size="0.1 0.05" material="rubber"/>
+        <joint name="right_wheel_joint" type="hinge" axis="0 1 0" limited="false"/>
+      </body>
+
     </body> <!-- Caterpillar -->
   </worldbody>
 
