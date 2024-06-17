@@ -30,6 +30,12 @@ SIM_TASK_CONFIGS = {
         'episode_len': 500,
         'camera_names': ['top']
     },
+    'sim_pickup_task': {
+        'dataset_dir': DATA_DIR + '/excavator_dataset',
+        'num_episodes': 2,
+        'episode_len': 400,
+        'camera_names': ['top']
+    },
 }
 
 ### Simulation envs fixed constants

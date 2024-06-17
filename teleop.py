@@ -50,21 +50,21 @@ class TeleOpHandler(threading.Thread):
         with self.lock:
             try:
                 if key.vk == 100:  # Numpad 4
-                    self.keyboard_input['waist_rotation'] += 0.02  # Start rotating left (waist)
+                    self.keyboard_input['waist_rotation'] = 0.02  # Start rotating left (waist)
                 elif key.vk == 102:  # Numpad 6
-                    self.keyboard_input['waist_rotation'] += -0.02  # Start rotating right (waist)
+                    self.keyboard_input['waist_rotation'] = -0.02  # Start rotating right (waist)
                 elif key.vk == 104:  # Numpad 8
-                    self.keyboard_input['shoulder_elevation'] += -0.02  # Shoulder up
+                    self.keyboard_input['shoulder_elevation'] = -0.02  # Shoulder up
                 elif key.vk == 101:  # Numpad 5
-                    self.keyboard_input['shoulder_elevation'] += 0.02  # Shoulder down
+                    self.keyboard_input['shoulder_elevation'] = 0.02  # Shoulder down
                 elif key.vk == 105:  # Numpad 9
-                    self.keyboard_input['elbow_elevation'] += -0.02  # Elbow up
+                    self.keyboard_input['elbow_elevation'] = -0.02  # Elbow up
                 elif key.vk == 99:  # Numpad 3
-                    self.keyboard_input['elbow_elevation'] += 0.02  # Elbow down
+                    self.keyboard_input['elbow_elevation'] = 0.02  # Elbow down
                 elif key.vk == 111:  # Numpad /
-                    self.keyboard_input['gripper_rotation'] += -0.04  # Gripper open
+                    self.keyboard_input['gripper_rotation'] = -0.04  # Gripper open
                 elif key.vk == 106:  # Numpad *
-                    self.keyboard_input['gripper_rotation'] += 0.04  # Gripper close
+                    self.keyboard_input['gripper_rotation'] = 0.04  # Gripper close
             except AttributeError:
                 pass  # Ignore non-virtual key presses
 
