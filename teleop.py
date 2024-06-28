@@ -1,4 +1,6 @@
 import threading
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import time
 from pynput import keyboard
@@ -25,13 +27,13 @@ class TeleOpHandler(threading.Thread):
         self.keyboard_input = {
             'waist_rotation': .0,
             'shoulder_elevation': .0,
-            'elbow_elevation': .0,
+            'wrist_elevation': .0,
             'gripper_rotation': .0
         }
         self.joystick_input = {
             'waist_rotation': .0,
             'shoulder_elevation': .0,
-            'elbow_elevation': .0,
+            'wrist_elevation': .0,
             'gripper_rotation': .0
         }
 
@@ -40,11 +42,11 @@ class TeleOpHandler(threading.Thread):
             pygame.event.pump()  # Handle internal events
             if self.joystick:
                 with self.lock:
-                    self.joystick_input['waist_rotation'] = self.joystick.get_axis(0) * 0.01
-                    self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(1) * 0.01
-                    self.joystick_input['elbow_elevation'] = self.joystick.get_axis(2) * 0.01
-                    self.joystick_input['gripper_rotation'] = self.joystick.get_axis(3) * 0.01
-            time.sleep(0.1)  # Limit the polling rate
+                    self.joystick_input['waist_rotation'] = self.joystick.get_axis(4) * -0.03
+                    self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(3) * -0.02
+                    self.joystick_input['wrist_elevation'] = self.joystick.get_axis(1) * -0.05
+                    self.joystick_input['gripper_rotation'] = self.joystick.get_axis(0) * 0.1
+            time.sleep(0.01)  # Limit the polling rate
 
     def on_press(self, key):
         with self.lock:
@@ -58,9 +60,9 @@ class TeleOpHandler(threading.Thread):
                 elif key.vk == 101:  # Numpad 5
                     self.keyboard_input['shoulder_elevation'] = 0.02  # Shoulder down
                 elif key.vk == 105:  # Numpad 9
-                    self.keyboard_input['elbow_elevation'] = -0.02  # Elbow up
+                    self.keyboard_input['wrist_elevation'] = -0.02  # Elbow up
                 elif key.vk == 99:  # Numpad 3
-                    self.keyboard_input['elbow_elevation'] = 0.02  # Elbow down
+                    self.keyboard_input['wrist_elevation'] = 0.02  # Elbow down
                 elif key.vk == 111:  # Numpad /
                     self.keyboard_input['gripper_rotation'] = -0.04  # Gripper open
                 elif key.vk == 106:  # Numpad *
@@ -76,7 +78,7 @@ class TeleOpHandler(threading.Thread):
                 elif key.vk in [104, 101]: # Numpad 8 or 5
                     self.keyboard_input['shoulder_elevation'] = 0  # Stop moving shoulder
                 elif key.vk in [105, 99]:  # Numpad 9 or 3
-                    self.keyboard_input['elbow_elevation'] = 0  # Stop moving elbow
+                    self.keyboard_input['wrist_elevation'] = 0  # Stop moving elbow
                 elif key.vk in [111, 106]: # Numpad / or *
                     self.keyboard_input['gripper_rotation'] = 0  # Stop moving gripper
             except AttributeError:

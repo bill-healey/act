@@ -18,18 +18,23 @@
                         <inertial pos="0.0513477 0.00680462 0" quat="-0.702604 -0.0796724 -0.702604 0.0796724" mass="0.414823" diaginertia="0.0005911 0.000546493 0.000155707" />
                         <geom quat="0 1 0 0" type="mesh" mesh="vx300s_5_lower_forearm" name="vx300s_left/5_lower_forearm"/>
                         <body name="vx300s_left/wrist_link" pos="0.1 0 0">
+                            <camera name="left_wrist" pos="-0.1 0 0.16" fovy="40" mode="targetbody" target="vx300s_left/camera_focus"/>
                             <inertial pos="0.046743 -7.6652e-06 0.010565" quat="-0.00100191 0.544586 0.0026583 0.8387" mass="0.115395" diaginertia="5.45707e-05 4.63101e-05 4.32692e-05" />
+                            <!--<joint name="vx300s_left/wrist_angle" pos="0 0 0" axis="0 1 0" limited="true" range="-1.8675 2.23402" frictionloss="30" />-->
                             <geom quat="0.707107 0 0 0.707107" type="mesh" mesh="vx300s_6_wrist" name="vx300s_left/6_wrist" />
                             <body name="vx300s_left/gripper_link" pos="0.069744 0 0">
+                                <body name="vx300s_left/camera_focus" pos="0.15 0 0.01">
+                                    <site pos="0 0 0" size="0.01" type="sphere" name="left_cam_focus" rgba="0 0 1 0"/>
+                                </body>
                                 <body name="left_claw" pos=".02 0 0" >
                                     <inertial pos="0 0 0" mass="0.3" quat="-0.702604 -0.0796724 -0.702604 0.0796724" diaginertia=".001 .001 .001" />
                                     <joint pos=".005 .03 0" name="left_claw_joint" axis="0 0 1" range="-1 1" frictionloss="50"/>
-                                    <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="2 .005 .0001" pos="0 0 0" euler="3.14 1.57 0" type="mesh" mesh="vx300s_10_gripper_finger_right" name="vx300s_right/10_right_gripper_finger"/>
+                                    <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="1 .05 .05" pos="0 0 0" euler="3.14 1.57 0" type="mesh" mesh="vx300s_10_gripper_finger_right" name="vx300s_right/10_right_gripper_finger"/>
                                 </body>
                                 <body name="right_claw" pos=".02 0 0">
                                     <inertial pos="0 0 0" mass="0.3" quat="-0.702604 -0.0796724 -0.702604 0.0796724" diaginertia=".001 .001 .001" />
                                     <joint pos=".005 -.03 0" name="right_claw_joint" axis="0 0 1" range="-1 1" frictionloss="50"/>
-                                    <geom condim="4" friction="2 .005 .0001" pos="0 0 0" euler="3.14 1.57 0" type="mesh" mesh="vx300s_10_gripper_finger_left" name="vx300s_right/10_left_gripper_finger"/>
+                                    <geom condim="4" friction="1 .05 .005" pos="0 0 0" euler="3.14 1.57 0" type="mesh" mesh="vx300s_10_gripper_finger_left" name="vx300s_right/10_left_gripper_finger"/>
                                 </body>
                             </body>
                         </body>

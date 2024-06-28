@@ -1,17 +1,15 @@
 import os
-
 import h5py
 import numpy as np
 import collections
-import matplotlib.pyplot as plt
 import time
 from dm_control import mujoco
 from dm_control.rl import control
-from dm_control.viewer import launch, viewer, user_input, renderer
 from dm_control.suite import base
 from dm_env import specs
 from teleop import TeleOpHandler
-from constants import DT, XML_DIR, START_ARM_POSE, MASTER_GRIPPER_POSITION_NORMALIZE_FN
+from plot_handler import PlotHandler
+from constants import DT, XML_DIR, SIM_TASK_CONFIGS
 
 
 class PickupTask(base.Task):
@@ -52,9 +50,8 @@ class PickupTask(base.Task):
         obs['qvel'] = self.get_qvel(physics)
         obs['env_state'] = self.get_env_state(physics)
         obs['images'] = dict()
-        obs['images']['top'] = physics.render(height=480, width=640, camera_id='top')
-        obs['images']['angle'] = physics.render(height=480, width=640, camera_id='angle')
-        #obs['images']['vis'] = physics.render(height=480, width=640, camera_id='front_close')
+        for camera in SIM_TASK_CONFIGS['sim_pickup_task']['camera_names']:
+            obs['images'][camera] = physics.render(height=480, width=640, camera_id=camera)
         return obs
 
     def get_reward(self, physics):
@@ -67,21 +64,19 @@ class PickupTask(base.Task):
             name_geom_2 = physics.model.id2name(id_geom_2, 'geom')
             contact_pair = (name_geom_1, name_geom_2)
             all_contact_pairs.append(contact_pair)
-
         touch_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
         touch_table = ("red_box", "table") in all_contact_pairs
-
         reward = 0
         if touch_gripper:
             reward = 1
-        if touch_gripper and touch_table: # lifted
+        if touch_gripper and touch_table:
             reward = 2
-        if touch_gripper and not touch_table: # lifted
+        if touch_gripper and not touch_table:
             reward = 4
         table_z = physics.named.data.xpos['table'][2]
         red_box_size = 0.02  # The height of the box from the MJCF definition
         red_box_current_z = physics.named.data.xpos['box'][2]
-        if touch_gripper and not touch_table and red_box_current_z > table_z + 5 * red_box_size: # lifted up
+        if touch_gripper and not touch_table and red_box_current_z > table_z + 5 * red_box_size:
             reward = 5
         return reward
 
@@ -96,19 +91,21 @@ def get_action(teleop_handler, action):
     action = [
         action[0] + teleop_actions['waist_rotation'],
         action[1] + teleop_actions['shoulder_elevation'],
-        action[2] + teleop_actions['elbow_elevation'],
+        action[2] + teleop_actions['wrist_elevation'],
         # Claw has two hinges so claw action must be duplicated.  Model handles inversion of second hinge.
         # Also clamp claw ctrlrange to match model limitations
         max(-.4, min(action[3] + teleop_actions['gripper_rotation'], .4)),
-        max(-.4, min(action[4] + teleop_actions['gripper_rotation'], .4))
+        max(-.4, min(action[4] - teleop_actions['gripper_rotation'], .4))
     ]
     return action
 
 
-def test_sim_teleop(record=True, num_episodes=2):
-    dataset_dir = 'data\excavator_dataset'
-    camera_names = ['top']
-    max_timesteps = 500
+def test_sim_teleop(record=True):
+    task_config = SIM_TASK_CONFIGS['sim_pickup_task']
+    dataset_dir = task_config['dataset_dir']
+    num_episodes = task_config['num_episodes']
+    episode_len = task_config['episode_len']
+    camera_names = task_config['camera_names']
     if not os.path.isdir(dataset_dir):
         os.makedirs(dataset_dir, exist_ok=True)
     xml_path = os.path.join(XML_DIR, f'single_viperx_pickup_cube.xml')
@@ -116,23 +113,19 @@ def test_sim_teleop(record=True, num_episodes=2):
     task = PickupTask()
     teleop_handler = TeleOpHandler()
     teleop_handler.start()
+    plot_handler = PlotHandler(camera_names)
     success = []
+    env = control.Environment(physics, task, time_limit=episode_len, control_timestep=DT,
+                              n_sub_steps=None, flat_observation=False)
     for episode_idx in range(num_episodes):
-        env = control.Environment(physics, task, time_limit=60, control_timestep=DT,
-                                  n_sub_steps=None, flat_observation=False)
         ts = env.reset()
         episode = [ts]
-        ax = plt.subplot()
-        plt_img = ax.imshow(ts.observation['images']['angle'])
-        plt.ion()
         action = np.zeros(6)
-        for t in range(max_timesteps):
+        for t in range(episode_len):
             action = get_action(teleop_handler, action)
             ts = env.step(action)
             episode.append(ts)
-            plt_img.set_data(ts.observation['images']['angle'])
-            plt.pause(0.02)
-
+            plot_handler.render_images(ts.observation['images'])
         if record:
             episode_return = np.sum([ts.reward for ts in episode[1:]])
             episode_max_reward = np.max([ts.reward for ts in episode[1:]])
@@ -144,7 +137,6 @@ def test_sim_teleop(record=True, num_episodes=2):
                 print(f"{episode_idx=} Failed with reward max {episode_max_reward} sum {episode_return}")
 
             joint_traj = [ts.observation['qpos'] for ts in episode]
-            subtask_info = episode[0].observation['env_state'].copy()  # box pose at step 0
             # because the replaying, there will be eps_len + 1 actions and eps_len + 2 timesteps
             # truncate here to be consistent
             joint_traj = joint_traj[:-1]
@@ -156,7 +148,6 @@ def test_sim_teleop(record=True, num_episodes=2):
             }
             for cam_name in camera_names:
                 data_dict[f'/observations/images/{cam_name}'] = []
-            max_timestamps = len(joint_traj)
             while joint_traj:
                 action = joint_traj.pop(0)
                 ts = episode.pop(0)
@@ -167,34 +158,30 @@ def test_sim_teleop(record=True, num_episodes=2):
                     data_dict[f'/observations/images/{cam_name}'].append(ts.observation['images'][cam_name])
             # HDF5
             t0 = time.time()
-            dataset_path = os.path.join(dataset_dir, f'episode_{episode_idx}')
+            succeeded_text = 'success' if episode_max_reward == env.task.max_reward else 'fail'
+            files = [f for f in os.listdir(dataset_dir) if f.endswith('.hdf5')]
+            indices = [int(f.split(f'_{succeeded_text}_')[1].split('.')[0]) for f in files if f'episode_{succeeded_text}' in f]
+            next_index = max(indices) + 1 if indices else 0
+            dataset_path = os.path.join(dataset_dir, f'episode_{succeeded_text}_{next_index}')
             with h5py.File(dataset_path + '.hdf5', 'w', rdcc_nbytes=1024 ** 2 * 2) as root:
                 root.attrs['sim'] = True
                 obs = root.create_group('observations')
                 image = obs.create_group('images')
                 for cam_name in camera_names:
-                    _ = image.create_dataset(cam_name, (max_timesteps, 480, 640, 3), dtype='uint8',
+                    _ = image.create_dataset(cam_name, (episode_len, 480, 640, 3), dtype='uint8',
                                              chunks=(1, 480, 640, 3), )
                 # compression='gzip',compression_opts=2,)
                 # compression=32001, compression_opts=(0, 0, 0, 0, 9, 1, 1), shuffle=False)
-                qpos = obs.create_dataset('qpos', (max_timesteps, 12))
-                qvel = obs.create_dataset('qvel', (max_timesteps, 11))
-                action = root.create_dataset('action', (max_timesteps, 12))
-
+                qpos = obs.create_dataset('qpos', (episode_len, 12))
+                qvel = obs.create_dataset('qvel', (episode_len, 11))
+                action = root.create_dataset('action', (episode_len, 12))
                 for name, array in data_dict.items():
                     root[name][...] = array
             print(f'Saving: {time.time() - t0:.1f} secs\n')
-
-            del env
             del episode
-
+    teleop_handler.stop()
     print(f'Saved to {dataset_dir}')
     print(f'Success: {np.sum(success)} / {len(success)}')
-
-
-
-
-    teleop_handler.stop()
 
 
 if __name__ == '__main__':

@@ -31,10 +31,10 @@ SIM_TASK_CONFIGS = {
         'camera_names': ['top']
     },
     'sim_pickup_task': {
-        'dataset_dir': DATA_DIR + '/excavator_dataset',
-        'num_episodes': 2,
-        'episode_len': 400,
-        'camera_names': ['top']
+        'dataset_dir': DATA_DIR + '/excavator_multicam_dataset',
+        'num_episodes': 10,
+        'episode_len': 120,
+        'camera_names': ['top', 'angle', 'left_wrist'],
     },
 }
 
