@@ -1,10 +1,8 @@
 <mujoco>
     <include file="scene.xml"/>
-    <include file="vx300s_dependencies.xml"/>
-    <!--<include file="excavator/excavator.xml" />-->
+    <include file="excavator/excavator.xml" />
     <worldbody>
-        <include file="vx300s_left.xml" />
-        <!--<body name="excavator" pos="2 0 0" quat="1 0 0 0"></body>-->
+        <body name="excavator" pos="2 0 0" quat="1 0 0 0"></body>
         <body name="box" pos="0.2 0.5 0.05">
             <joint name="red_box_joint" type="free" frictionloss="1.01" />
             <inertial pos="0 0 0" mass="0.05" diaginertia="0.002 0.002 0.002" />
@@ -12,22 +10,17 @@
             <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="1 0.01 0.001" pos="0 0 0" size="0.02 0.02 0.02" type="box" name="red_box" rgba="1 0 0 1" />
         </body>
     </worldbody>
-    <contact>
-        <exclude name="exclude_left_claw_grip" body1="vx300s_left/gripper_link" body2="left_claw"/>
-        <exclude name="exclude_right_claw_grip" body1="vx300s_left/gripper_link" body2="right_claw"/>
-        <exclude name="exclude_left_claw_wrist" body1="vx300s_left/wrist_link" body2="left_claw"/>
-        <exclude name="exclude_right_claw_wrist" body1="vx300s_left/wrist_link" body2="right_claw"/>
-    </contact>
     <actuator>
+        <!--
         <velocity joint="vx300s_left/waist" kv="1000" user="1" forcerange="-300 300"/>
         <velocity joint="vx300s_left/shoulder" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
         <velocity joint="vx300s_left/elbow" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
         <velocity joint="left_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="left_claw_actuator"/>
         <velocity joint="right_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="right_claw_actuator"/>
+        -->
     </actuator>
 
     <keyframe>
-        <key qpos="0 -0.96 1.16 0.05 -0.05 0.2 0.5 0.05 1 0 0 0"/>
-        <!--<key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>-->
+        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
     </keyframe>
 </mujoco>

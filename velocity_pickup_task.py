@@ -11,7 +11,8 @@ class PickupTask(base.Task):
         random_pos = np.array([np.random.uniform(0, .15), np.random.uniform(.25, .75), 0.05])
         physics.named.data.qpos['red_box_joint'][:3] = random_pos
         #self.action = np.array([0, -0.96, 1.16, 0, -0.3, 0, 0.02239, -0.02239])
-        self.action = np.zeros(5)  # Initialize action array
+        self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
+        self.action = np.zeros(self.action_len)  # Initialize action array
         self.max_reward = 5
 
     def before_step(self, action, physics):
@@ -34,7 +35,7 @@ class PickupTask(base.Task):
 
     @staticmethod
     def get_env_state(physics):
-        env_state = physics.data.qpos.copy()[5:]
+        env_state = physics.data.qpos.copy()[SIM_TASK_CONFIGS['sim_pickup_task']['action_len']:]
         return env_state
 
     def get_observation(self, physics):
@@ -88,6 +89,6 @@ class PickupTask(base.Task):
             # Claw has two hinges so claw action must be duplicated.  Model handles inversion of second hinge.
             # Also clamp claw ctrlrange to match model limitations
             max(-.4, min(teleop_actions['gripper_rotation'], .4))*100,
-            -max(-.4, min(teleop_actions['gripper_rotation'], .4))*100
+            #-max(-.4, min(teleop_actions['gripper_rotation'], .4))*100
         ]
         return action

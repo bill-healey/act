@@ -31,10 +31,11 @@ SIM_TASK_CONFIGS = {
         'camera_names': ['top']
     },
     'sim_pickup_task': {
-        'dataset_dir': DATA_DIR + '/arm_qvel_dataset',
+        'dataset_dir': DATA_DIR + '/excavator_qvel_dataset',
         'num_episodes': 10,
         'episode_len': 1200,
-        'camera_names': ['top', 'angle', 'left_wrist'],
+        'camera_names': ['top', 'angle'],
+        'action_len': 4
     },
 }
 

@@ -2,7 +2,7 @@ import os
 import h5py
 import numpy as np
 import time
-from dm_control import mujoco
+from dm_control import mujoco, viewer
 from dm_control.rl import control
 from teleop import TeleOpHandler
 from plot_handler import PlotHandler
@@ -18,7 +18,7 @@ def test_sim_teleop(record=True):
     camera_names = task_config['camera_names']
     if not os.path.isdir(dataset_dir):
         os.makedirs(dataset_dir, exist_ok=True)
-    xml_path = os.path.join(XML_DIR, f'single_viperx_pickup_cube.xml')
+    xml_path = os.path.join(XML_DIR, f'excavator_scene.xml')
     physics = mujoco.Physics.from_xml_path(xml_path)
     task = PickupTask()
     teleop_handler = TeleOpHandler()
@@ -27,10 +27,11 @@ def test_sim_teleop(record=True):
     success = []
     env = control.Environment(physics, task, time_limit=episode_len, control_timestep=DT,
                               n_sub_steps=None, flat_observation=False)
+    viewer.launch(environment_loader=lambda: env)
     for episode_idx in range(num_episodes):
         ts = env.reset()
         episode = [ts]
-        action = np.zeros(6)
+        action = np.zeros(task_config['action_len'])
         for t in range(episode_len):
             action = task.control_input_to_action(teleop_handler, action)
             ts = env.step(action)
@@ -74,8 +75,8 @@ def test_sim_teleop(record=True):
                 for cam in camera_names:
                     image.create_dataset(cam, (episode_len, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
                 #obs.create_dataset('qpos', (episode_len, 12))
-                obs.create_dataset('qvel', (episode_len, 5))
-                root.create_dataset('action', (episode_len, 5))
+                obs.create_dataset('qvel', (episode_len, task_config['action_len']))
+                root.create_dataset('action', (episode_len, task_config['action_len']))
                 for name, array in data_dict.items():
                     root[name][...] = array
             del episode
