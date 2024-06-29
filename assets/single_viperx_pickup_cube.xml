@@ -12,13 +12,18 @@
             <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="1 0.01 0.001" pos="0 0 0" size="0.02 0.02 0.02" type="box" name="red_box" rgba="1 0 0 1" />
         </body>
     </worldbody>
-
+    <contact>
+        <exclude name="exclude_left_claw_grip" body1="vx300s_left/gripper_link" body2="left_claw"/>
+        <exclude name="exclude_right_claw_grip" body1="vx300s_left/gripper_link" body2="right_claw"/>
+        <exclude name="exclude_left_claw_wrist" body1="vx300s_left/wrist_link" body2="left_claw"/>
+        <exclude name="exclude_right_claw_wrist" body1="vx300s_left/wrist_link" body2="right_claw"/>
+    </contact>
     <actuator>
-        <position ctrllimited="true" ctrlrange="-3.14158 3.14158" joint="vx300s_left/waist" kp="800" user="1" forcelimited="true" forcerange="-150 150"/>
-        <position ctrllimited="true" ctrlrange="-1.85005 1.25664" joint="vx300s_left/shoulder" kp="1600" user="1" forcelimited="true" forcerange="-300 300"/>
-        <position ctrllimited="true" ctrlrange="-1.76278 1.6057" joint="vx300s_left/elbow" kp="800" user="1" forcelimited="true" forcerange="-100 100"/>
-        <position name="left_claw_actuator" ctrllimited="true" ctrlrange="-.4 .4" joint="left_claw_joint" user="1" gear="2" kp="100" forcelimited="true" forcerange="-100 100"/>
-        <position name="right_claw_actuator" ctrllimited="true" ctrlrange="-.4 .4" joint="right_claw_joint" user="1" gear="2" kp="100" forcelimited="true" forcerange="-100 100"/>
+        <velocity joint="vx300s_left/waist" kv="1000" user="1" forcerange="-300 300"/>
+        <velocity joint="vx300s_left/shoulder" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
+        <velocity joint="vx300s_left/elbow" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
+        <velocity joint="left_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="left_claw_actuator"/>
+        <velocity joint="right_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="right_claw_actuator"/>
     </actuator>
 
     <keyframe>

@@ -1,0 +1,15 @@
+torchvision~=0.18.0
+packaging~=24.0
+numpy~=1.24.4
+matplotlib~=3.7.5
+ipython~=8.12.3
+setuptools~=69.5.1
+jinja2~=3.1.4
+h5py~=3.11.0
+detr~=0.0.0
+pygame~=2.5.2
+pynput~=1.7.7
+pyquaternion~=0.9.9
+tqdm~=4.66.4
+einops~=0.8.0
+opencv-python~=4.9.0.80
