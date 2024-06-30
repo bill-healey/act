@@ -27,7 +27,7 @@ def test_sim_teleop(record=True):
     success = []
     env = control.Environment(physics, task, time_limit=episode_len, control_timestep=DT,
                               n_sub_steps=None, flat_observation=False)
-    viewer.launch(environment_loader=lambda: env)
+    #viewer.launch(environment_loader=lambda: env)
     for episode_idx in range(num_episodes):
         ts = env.reset()
         episode = [ts]

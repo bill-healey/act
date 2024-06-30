@@ -1,6 +1,7 @@
 <mujoco>
     <asset>
         <mesh file="tabletop.stl" name="tabletop" scale="0.01 0.01 0.01"/>
+        <texture type="skybox" builtin="gradient" width="128" height="128" rgb1=".2 .3 .4" rgb2=".1 .2 .3"/>
     </asset>
     <visual>
         <map fogstart="1.5" fogend="5" force="0.1" znear="0.1"/>
@@ -8,13 +9,12 @@
         <headlight ambient="0.4 0.4 0.4"/>
     </visual>
     <option gravity="0 0 -9.81"/>  <!-- Standard Earth gravity in the negative Z direction -->
-    <!--    <option timestep='0.0025' iterations="50" tolerance="1e-10" solver="Newton" jacobian="dense" cone="elliptic"/>-->
     <include file="excavator/excavator.xml"/>
     <worldbody>
-        <light castshadow="false" directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='-1 -1 1'
-               dir='1 1 -1'/>
-        <light directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='1 -1 1' dir='-1 1 -1'/>
-        <light castshadow="false" directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='0 1 1'
+        <light castshadow="false" directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='-6 6 5'
+               dir='1 -1 -1'/>
+        <light directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='6 -6 6' dir='1 -1 1'/>
+        <light castshadow="false" directional='true' diffuse='.3 .3 .3' specular='0.3 0.3 0.3' pos='0 6 6'
                dir='0 -1 -1'/>
         <body name="table" pos="3.5 0 0">
             <geom group="1" mesh="tabletop" pos="0 0 0" type="mesh" conaffinity="1" contype="1" name="table" rgba="0.2 0.2 0.2 1" />
@@ -22,10 +22,8 @@
         <body name="midair" pos="0 .6 0.2">
             <site pos="0 0 0" size="0.1" type="sphere" name="midair" rgba="1 0 0 0"/>
         </body>
-        <camera name="left_pillar" pos="-0.5 0.2 0.6" fovy="78" mode="targetbody" target="table"/>
-        <camera name="right_pillar" pos="0.5 0.2 0.6" fovy="78" mode="targetbody" target="table"/>
-        <camera name="top" pos="0 0.6 0.8" fovy="78" mode="targetbody" target="table"/>
-        <camera name="angle" pos="0 0 0.6" fovy="78" mode="targetbody" target="table"/>
+        <camera name="top" pos="4 0 7.5" fovy="78" mode="targetbody" target="table"/>
+        <camera name="angle" pos="3.5 6 2" fovy="78" mode="targetbody" target="table"/>
         <!--<camera name="front_close" pos="1 0.2 0.4" fovy="78" mode="targetbody" target="vx300s_left/camera_focus"/>>-->
 
         <body name="excavator" quat="1 0 0 0"/>
@@ -36,15 +34,12 @@
         </body>
     </worldbody>
     <actuator>
-        <!--
-        <velocity joint="vx300s_left/waist" kv="1000" user="1" forcerange="-300 300"/>
-        <velocity joint="vx300s_left/shoulder" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
-        <velocity joint="vx300s_left/elbow" kv="50" user="1" forcelimited="true" forcerange="-300 300"/>
-        <velocity joint="left_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="left_claw_actuator"/>
-        <velocity joint="right_claw_joint" kv="10" user="1" forcelimited="true" forcerange="-300 300" name="right_claw_actuator"/>
-        -->
+        <velocity name="Rotation" joint="chassis" kv="700000" forcerange="-120000 120000"/>
+        <velocity name="Boom" joint="boom" kv="700000" forcerange="-120000 120000"/>
+        <velocity name="Arm" joint="arm" kv="700000" forcerange="-120000 120000"/>
+        <velocity name="Bucket" joint="bucket" kv="700000" forcerange="-120000 120000"/>
     </actuator>
     <keyframe>
-        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
     </keyframe>
 </mujoco>
