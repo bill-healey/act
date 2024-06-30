@@ -17,7 +17,7 @@ from utils import sample_box_pose, sample_insertion_pose # robot functions
 from utils import compute_dict_mean, set_seed, detach_dict # helper functions
 from policy import ACTPolicy, CNNMLPPolicy
 from visualize_episodes import save_videos
-from view import PickupTask
+from sim_record import PickupTask
 from constants import DT, XML_DIR, START_ARM_POSE, MASTER_GRIPPER_POSITION_NORMALIZE_FN
 from plot_handler import PlotHandler
 

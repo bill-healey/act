@@ -8,7 +8,7 @@ from constants import SIM_TASK_CONFIGS
 class PickupTask(base.Task):
     def initialize_episode(self, physics):
         super().initialize_episode(physics)
-        random_pos = np.array([np.random.uniform(0, .15), np.random.uniform(.25, .75), 0.05])
+        random_pos = np.array([np.random.uniform(0, .15) + 6, np.random.uniform(.25, .75), .5])
         physics.named.data.qpos['red_box_joint'][:3] = random_pos
         #self.action = np.array([0, -0.96, 1.16, 0, -0.3, 0, 0.02239, -0.02239])
         self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
@@ -77,7 +77,7 @@ class PickupTask(base.Task):
     def action_spec(self, physics):
         # Define the action specification
         return specs.BoundedArray(
-            shape=self.action_len, dtype=np.float32, minimum=-1.0, maximum=1.0, name='action')
+            shape=(self.action_len,), dtype=np.float32, minimum=-10.0, maximum=10.0, name='action')
 
     @staticmethod
     def control_input_to_action(teleop_handler, action):
