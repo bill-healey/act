@@ -48,14 +48,16 @@ Copyright, 2023, Vilella Kenny.
               <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="60" damping="0" stiffness="500"/>
               <geom name="arm" type="mesh" mesh="arm" material="arm" pos="0 0 0" euler="0 0 0"/>
               <inertial pos="0.476 0 0.119" mass="60" fullinertia="1.5 30.2 29.0 -0.02 2.3 0.002"/>
-              <body name="bucket_top" pos="2.029 0 -0.998" euler="0 -30 0">
+              <body name="bucket_top" pos="2.929 0 -0.998" euler="0 -30 0">
                 <joint name="bucket_top" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
-                <geom name="bucket_top" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>
+                <!--<geom name="bucket_top" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>-->
+                  <geom name="bucket_top" pos="-.8 0 -.45" type="box" size=".8 .9 .05" euler="0 150 0" material="bucket" friction="10 .35 1.35" condim="6"/>
                 <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
               </body> <!-- Bucket -->
-              <body name="bucket_bottom" pos="1.629 0 -0.998" euler="0 0 180">
+              <body name="bucket_bottom" pos=".429 0 -0.998" euler="0 0 180">
                 <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
-                <geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>
+                <!--<geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>-->
+                  <geom name="bucket_bottom" pos="-.8 0 -.45" type="box" size=".8 .9 .05" euler="0 120 0" material="bucket" friction="10 .35 1.35" condim="6"/>
                 <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
               </body> <!-- Bucket -->
             </body> <!-- Arm -->
