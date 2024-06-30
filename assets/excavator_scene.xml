@@ -8,6 +8,11 @@
         <quality shadowsize="4096" offsamples="4"/>
         <headlight ambient="0.4 0.4 0.4"/>
     </visual>
+    <default>
+        <velocity ctrllimited="true" ctrlrange="-0.5 0.5"/>
+        <mesh scale="1 1 1"/>
+        <material emission="0.25" rgba="1 1 1 1"/>
+    </default>
     <option gravity="0 0 -9.81"/>  <!-- Standard Earth gravity in the negative Z direction -->
     <include file="excavator/excavator.xml"/>
     <worldbody>
@@ -28,18 +33,26 @@
 
         <body name="excavator" quat="1 0 0 0"/>
         <body name="box" pos="0.2 0.5 0.05">
-            <joint name="red_box_joint" type="free" frictionloss="1.01" />
+            <joint name="red_box_joint" type="free" frictionloss="10" />
             <inertial pos="0 0 0" mass="0.05" diaginertia="0.002 0.002 0.002" />
-            <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="1 0.01 0.001" pos="6 -.55 .25" size="0.2 0.2 0.2" type="box" name="red_box" rgba="1 0 0 1" />
+            <geom condim="4" solimp="2 1 0.01" solref="0.01 1" friction="1 0.01 0.001" pos="6 -.55 .25" size="0.3" type="sphere" name="red_box" rgba="1 0 0 1" />
         </body>
     </worldbody>
+    <contact>
+        <exclude body1="bucket_top" body2="bucket_bottom"/>
+        <exclude body1="bucket_top" body2="arm"/>
+        <exclude body1="bucket_bottom" body2="arm"/>
+        <exclude body1="arm" body2="boom"/>
+        <exclude body1="boom" body2="chassis"/>
+    </contact>
     <actuator>
-        <velocity name="Rotation" joint="chassis" kv="700000" forcerange="-120000 120000"/>
-        <velocity name="Boom" joint="boom" kv="700000" forcerange="-120000 120000"/>
-        <velocity name="Arm" joint="arm" kv="700000" forcerange="-120000 120000"/>
-        <velocity name="Bucket" joint="bucket" kv="700000" forcerange="-120000 120000"/>
+        <velocity name="Rotation" user="1" joint="chassis" kv="70000" forcerange="-12000 12000"/>
+        <velocity name="Boom" user="1" joint="boom" kv="70000" forcerange="-12000 12000"/>
+        <velocity name="Arm" user="1" joint="arm" kv="20000" forcerange="-10000 10000"/>
+        <velocity name="Bucket_Top" user="1" joint="bucket_top" kv="20000" forcerange="-10000 10000"/>
+        <velocity name="Bucket_Bottom" user="1" joint="bucket_bottom" kv="20000" forcerange="-10000 10000"/>
     </actuator>
     <keyframe>
-        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
     </keyframe>
 </mujoco>

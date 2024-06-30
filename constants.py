@@ -35,7 +35,7 @@ SIM_TASK_CONFIGS = {
         'num_episodes': 10,
         'episode_len': 1200,
         'camera_names': ['top', 'angle'],
-        'action_len': 4
+        'action_len': 5
     },
 }
 

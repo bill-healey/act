@@ -10,12 +10,6 @@ Copyright, 2023, Vilella Kenny.
 
     <compiler meshdir="excavator/mesh" texturedir="excavator/texture"/>
 
-  <default>
-    <velocity ctrllimited="true" ctrlrange="-0.5 0.5"/>
-    <mesh scale="1 1 1"/>
-    <material emission="0.25" rgba="1 1 1 1"/>
-  </default>
-
   <visual>
     <headlight ambient="1 1 1" diffuse="0 0 0" specular="0 0 0"/>
   </visual>
@@ -73,37 +67,39 @@ Copyright, 2023, Vilella Kenny.
     <texture name="side link" type="2d" file="side_link_texture.png"/>
     <material name="side link" texture="side link"/>
   </asset>
+     <worldbody>
+      <body name="caterpillar" pos="0 0 0.040" euler="0 0 0">
+        <joint type="free" limited='false' damping="0" stiffness="0.1" armature="0"/>
+        <geom name="caterpillar" type="mesh" mesh="caterpillar" material="caterpillar" pos="0 0 0" euler="0 0 0"/>
+        <inertial pos="-0.070 0 0.386" mass="1000" fullinertia="489.6 668.9 1088.4 -2.9 -4.6 -1.2"/>
 
-  <worldbody>
-    <body name="caterpillar" pos="0 0 0.040" euler="0 0 0">
-      <joint type="free" limited='false' damping="0" stiffness="1" armature="0"/>
-      <geom name="caterpillar" type="mesh" mesh="caterpillar" material="caterpillar" pos="0 0 0" euler="0 0 0"/>
-      <inertial pos="-0.070 0 0.386" mass="10000" fullinertia="4896 6689 10884 -29 -46 -12"/>
+        <body name="chassis" pos="0 0 0.767" euler="0 0 0">
+          <joint name="chassis" type="hinge" axis="0 0 1" pos="0 0 0"/>
+          <geom name="chassis" type="mesh" mesh="chassis" material="chassis" pos="0 0 0" euler="0 0 0"/>
+          <inertial pos="-0.486 -0.150 0.480" mass="1000" fullinertia="695.8 1339.3 1717.0 -231.1 -98.0 -67.7"/>
 
-      <body name="chassis" pos="0 0 0.767" euler="0 0 0">
-        <joint name="chassis" type="hinge" axis="0 0 1" pos="0 0 0"/>
-        <geom name="chassis" type="mesh" mesh="chassis" material="chassis" pos="0 0 0" euler="0 0 0"/>
-        <inertial pos="-0.486 -0.150 0.480" mass="10000" fullinertia="6958 13393 17170 -2311 -980 -677"/>
+          <body name="boom" pos="0.326 0 0.389" euler="0 -30.0 0">
+            <joint name="boom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="100" damping="0" stiffness="500"/>
+            <geom name="boom" type="mesh" mesh="boom" material="boom" pos="0 0 0" euler="0 0 0"/>
+            <inertial pos="1.729 0 0.463" mass="80" fullinertia="8.7 176.8 169.0 -0.02 -1.4 0.002"/>
 
-        <body name="boom" pos="0.326 0 0.389" euler="0 -30.0 0">
-          <joint name="boom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="1000" damping=".1" stiffness="5000"/>
-          <geom name="boom" type="mesh" mesh="boom" material="boom" pos="0 0 0" euler="0 0 0"/>
-          <inertial pos="1.729 0 0.463" mass="800" fullinertia="87 1768 1690 -0.2 -14 0.02"/>
-
-          <body name="arm" pos="3.845 0 0" euler="0 30.0 0">
-            <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="1000" damping=".1" stiffness="5000"/>
-            <geom name="arm" type="mesh" mesh="arm" material="arm" pos="0 0 0" euler="0 0 0"/>
-            <inertial pos="0.476 0 0.119" mass="880" fullinertia="15 302 290 -0.2 23 0.02"/>
-
-            <body name="bucket" pos="1.729 0 -0.998" euler="0 -40.0 0">
-              <joint name="bucket" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="5000" damping="100" stiffness="5000"/>
-              <geom name="bucket" type="mesh" mesh="bucket" material="bucket" pos="0 0 0" euler="0 0 0"/>
-              <inertial pos="0.231 0 -0.468" mass="300" fullinertia="77 65 55 -0.2 -11 0.02"/>
-
-            </body> <!-- Bucket -->
-          </body> <!-- Arm -->
-        </body> <!-- Boom -->
-      </body> <!-- Chassis -->
-    </body> <!-- Caterpillar -->
-  </worldbody>
+            <body name="arm" pos="3.845 0 0" euler="0 30.0 0">
+              <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="60" damping="0" stiffness="500"/>
+              <geom name="arm" type="mesh" mesh="arm" material="arm" pos="0 0 0" euler="0 0 0"/>
+              <inertial pos="0.476 0 0.119" mass="60" fullinertia="1.5 30.2 29.0 -0.02 2.3 0.002"/>
+              <body name="bucket_top" pos="1.729 0 -0.998" euler="0 -50 0">
+                <joint name="bucket_top" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="500"/>
+                <geom name="bucket_top" type="mesh" mesh="bucket" material="bucket" pos="0 0 0" euler="0 0 0" friction="1 .05 .05"/>
+                <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+              </body> <!-- Bucket -->
+              <body name="bucket_bottom" pos="1.729 0 -0.998" euler="0 30 180">
+                <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="500"/>
+                <geom name="bucket_bottom" type="mesh" mesh="bucket" material="bucket" pos="0 0 0" euler="0 0 0" friction="1 .05 .05"/>
+                <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+              </body> <!-- Bucket -->
+            </body> <!-- Arm -->
+          </body> <!-- Boom -->
+        </body> <!-- Chassis -->
+      </body> <!-- Caterpillar -->
+    </worldbody>
 </mujoco>
