@@ -44,19 +44,27 @@ Copyright, 2023, Vilella Kenny.
             <geom name="boom" type="mesh" mesh="boom" material="boom" pos="0 0 0" euler="0 0 0"/>
             <inertial pos="1.729 0 0.463" mass="80" fullinertia="8.7 176.8 169.0 -0.02 -1.4 0.002"/>
 
-            <body name="arm" pos="3.845 0 0" euler="0 30.0 0">
+            <body name="arm" pos="3.945 0 -.55" euler="0 30.0 0">
               <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="60" damping="0" stiffness="500"/>
               <geom name="arm" type="mesh" mesh="arm" material="arm" pos="0 0 0" euler="0 0 0"/>
               <inertial pos="0.476 0 0.119" mass="60" fullinertia="1.5 30.2 29.0 -0.02 2.3 0.002"/>
-              <body name="bucket_top" pos="2.029 0 -0.998" euler="0 -30 0">
+              <body name="bucket_top" pos="1.929 0 -0.998" euler="0 -30 0">
                 <joint name="bucket_top" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
-                <geom name="bucket_top" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>
+                <geom name="bucket_top" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 2.35" condim="6"/>
                 <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+                  <body name="bucket_top_grip" pos=".4 0 -.85" euler="0 0 0">
+                      <geom name="bucket_top_grip" type="box" size=".04 .8 .04" material="boom" friction="10 .35 1" condim="6"/>
+                      <inertial pos="0 0 0" mass="10" fullinertia="8 9 10 0 0 0"/>
+                  </body>
               </body> <!-- Bucket -->
-              <body name="bucket_bottom" pos="1.629 0 -0.998" euler="0 0 180">
+              <body name="bucket_bottom" pos="1.729 0 -0.998" euler="0 0 180">
                 <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
-                <geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 1.35" condim="6"/>
+                <geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 2.35" condim="6"/>
                 <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+                  <body name="bucket_bottom_grip" pos=".4 0 -.85" euler="0 0 0">
+                      <geom name="bucket_bottom_grip" type="box" size=".04 .8 .04" material="boom" friction="10 .35 1" condim="6"/>
+                      <inertial pos="0 0 0" mass="10" fullinertia="8 9 10 0 0 0"/>
+                  </body>
               </body> <!-- Bucket -->
             </body> <!-- Arm -->
           </body> <!-- Boom -->
