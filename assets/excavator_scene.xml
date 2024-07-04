@@ -36,7 +36,7 @@
             <joint name="red_box_joint" type="free" frictionloss="1" />
             <!--<geom name="cube_geom" type="box" size="0.05 0.05 0.05" rgba="1 0 0 1"
                   solimp="0.9 0.99 0.001" solref="0.02 1" friction="10 1.5 1.5"/>-->
-            <inertial pos="0 0 0" mass="1" diaginertia=".002 .002 .002" />
+            <inertial pos="0 0 0" mass=".5" diaginertia=".001 .001 .001" />
             <geom condim="6" solimp="2 1 0.01" solref="0.01 1" friction="1 0.1 0.01" pos="0 0 0" size=".2 .2 .2" type="box" name="red_box" rgba="1 0 0 1" />
         </body>
 
@@ -60,11 +60,11 @@
         <exclude body1="box" body2="caterpillar"/>
     </contact>
     <actuator>
-        <velocity name="Rotation" user="1" joint="chassis" kv="70000" forcerange="-12000 12000"/>
-        <velocity name="Boom" user="1" joint="boom" kv="70000" forcerange="-12000 12000"/>
-        <velocity name="Arm" user="1" joint="arm" kv="20000" forcerange="-10000 10000"/>
-        <velocity name="Bucket_Top" user="1" joint="bucket_top" kv="20000" forcerange="-10000 10000"/>
-        <velocity name="Bucket_Bottom" user="1" joint="bucket_bottom" kv="20000" forcerange="-10000 10000"/>
+        <position name="Rotation" user="1" joint="chassis" kp="160"/>
+        <position name="Boom" user="1" joint="boom" kp="380"/>
+        <position name="Arm" user="1" joint="arm" kp="280"/>
+        <position name="Bucket_Top" user="1" joint="bucket_top" kp="200" forcerange="-300 300"/>
+        <position name="Bucket_Bottom" user="1" joint="bucket_bottom" kp="200" forcerange="-300 300"/>
     </actuator>
     <keyframe>
         <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>

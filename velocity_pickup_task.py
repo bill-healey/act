@@ -77,17 +77,17 @@ class PickupTask(base.Task):
     def action_spec(self, physics):
         # Define the action specification
         return specs.BoundedArray(
-            shape=(self.action_len,), dtype=np.float32, minimum=-10.0, maximum=10.0, name='action')
+            shape=(self.action_len,), dtype=np.float32, minimum=-1.0, maximum=1.0, name='action')
 
     @staticmethod
     def control_input_to_action(teleop_handler, action):
         teleop_actions = teleop_handler.get_actions()
-        action = [
-            teleop_actions['waist_rotation']*100,
-            teleop_actions['shoulder_elevation']*100,
-            teleop_actions['wrist_elevation']*100,
-            teleop_actions['gripper_rotation']*100,
-            teleop_actions['gripper_rotation']*100,
+        action += [
+            teleop_actions['waist_rotation'],
+            teleop_actions['shoulder_elevation'],
+            teleop_actions['wrist_elevation'],
+            teleop_actions['gripper_rotation'],
+            teleop_actions['gripper_rotation'],
             # Claw has two hinges so claw action must be duplicated.  Model handles inversion of second hinge.
             # Also clamp claw ctrlrange to match model limitations
             #max(-.4, min(teleop_actions['gripper_rotation'], .4))*100,

@@ -31,7 +31,7 @@ SIM_TASK_CONFIGS = {
         'camera_names': ['top']
     },
     'sim_pickup_task': {
-        'dataset_dir': DATA_DIR + '\\excavator_qvel_raise_dataset',
+        'dataset_dir': DATA_DIR + '\\excavator_qpos_dataset',
         'num_episodes': 10,
         'episode_len': 120,
         'camera_names': ['top', 'angle'],
@@ -40,7 +40,7 @@ SIM_TASK_CONFIGS = {
         'hidden_dim': 256,
         'batch_size': 4096,
         'dim_feedforward': 32,
-        'num_epochs': 3000,
+        'num_epochs': 2000,
         'lr': 1e-5,
         'seed': 42,
         'temporal_agg': False,

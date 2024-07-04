@@ -127,7 +127,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
     stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
     with open(stats_path, 'rb') as f:
         stats = pickle.load(f)
-    pre_process = lambda s_qvel: (s_qvel - stats['qvel_mean']) / stats['qvel_std']
+    pre_process = lambda s_qpos: (s_qpos - stats['qpos_mean']) / stats['qpos_std']
     post_process = lambda a: a * stats['action_std'] + stats['action_mean']
     xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
     physics = mujoco.Physics.from_xml_path(xml_path)
@@ -155,10 +155,10 @@ def eval_bc(config, ckpt_name, save_episode=True):
         ts = env.reset()
         if temporal_agg:
             all_time_actions = torch.zeros([max_timesteps, max_timesteps+num_queries, state_dim]).cuda()
-        qvel_history = torch.zeros((1, max_timesteps, state_dim)).cuda()
+        qpos_history = torch.zeros((1, max_timesteps, state_dim)).cuda()
         image_list = []
-        qvel_list = []
-        target_qvel_list = []
+        qpos_list = []
+        target_qpos_list = []
         rewards = []
         with torch.inference_mode():
             for t in range(max_timesteps):
@@ -169,14 +169,14 @@ def eval_bc(config, ckpt_name, save_episode=True):
                     image_list.append(obs['images'])
                 else:
                     image_list.append({'main': obs['image']})
-                qvel_numpy = np.array(obs['qvel'])
-                qvel = pre_process(qvel_numpy)
-                qvel = torch.from_numpy(qvel).float().cuda().unsqueeze(0)
-                qvel_history[:, t] = qvel
+                qpos_numpy = np.array(obs['qpos'])
+                qpos = pre_process(qpos_numpy)
+                qpos = torch.from_numpy(qpos).float().cuda().unsqueeze(0)
+                qpos_history[:, t] = qpos
                 curr_image = get_image(ts, camera_names)
 
                 if t % query_frequency == 0:
-                    all_actions = policy(qvel, curr_image)
+                    all_actions = policy(qpos, curr_image)
                 if temporal_agg:
                     all_time_actions[[t], t:t+num_queries] = all_actions
                     actions_for_curr_step = all_time_actions[:, t]
@@ -193,14 +193,14 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 ### post-process actions
                 raw_action = raw_action.squeeze(0).cpu().numpy()
                 action = post_process(raw_action)
-                target_qvel = action
+                target_qpos = action
 
                 ### step the environment
-                ts = env.step(target_qvel[:5])
+                ts = env.step(target_qpos[:5])
 
                 ### for visualization
-                qvel_list.append(qvel_numpy)
-                target_qvel_list.append(target_qvel)
+                qpos_list.append(qpos_numpy)
+                target_qpos_list.append(target_qpos)
                 rewards.append(ts.reward)
 
         rewards = np.array(rewards)
@@ -234,9 +234,9 @@ def eval_bc(config, ckpt_name, save_episode=True):
 
 
 def forward_pass(data, policy):
-    image_data, qvel_data, action_data, is_pad = data
-    image_data, qvel_data, action_data, is_pad = image_data.cuda(), qvel_data.cuda(), action_data.cuda(), is_pad.cuda()
-    return policy(qvel_data, image_data, action_data, is_pad)
+    image_data, qpos_data, action_data, is_pad = data
+    image_data, qpos_data, action_data, is_pad = image_data.cuda(), qpos_data.cuda(), action_data.cuda(), is_pad.cuda()
+    return policy(qpos_data, image_data, action_data, is_pad)
 
 
 def train_bc(train_dataloader, val_dataloader, config):

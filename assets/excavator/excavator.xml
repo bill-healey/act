@@ -30,40 +30,40 @@ Copyright, 2023, Vilella Kenny.
   </asset>
      <worldbody>
       <body name="caterpillar" pos="0 0 0.040" euler="0 0 0">
-        <joint type="free" limited='false' damping="0" stiffness="0.1" armature="0"/>
+        <joint type="free" limited='false' damping="0" stiffness="0" armature="0" frictionloss="6"/>
         <geom name="caterpillar" type="mesh" mesh="caterpillar" material="caterpillar" pos="0 0 0" euler="0 0 0"/>
-        <inertial pos="-0.070 0 0.386" mass="1000" fullinertia="489.6 668.9 1088.4 -2.9 -4.6 -1.2"/>
+        <inertial pos="0 0 0" mass="100.8" diaginertia="4.167 4.167 4.167"/>
 
         <body name="chassis" pos="0 0 0.767" euler="0 0 0">
-          <joint name="chassis" type="hinge" axis="0 0 1" pos="0 0 0"/>
+          <joint name="chassis" type="hinge" axis="0 0 1" pos="0 0 0" frictionloss="0"/>
           <geom name="chassis" type="mesh" mesh="chassis" material="chassis" pos="0 0 0" euler="0 0 0"/>
-          <inertial pos="-0.486 -0.150 0.480" mass="1000" fullinertia="695.8 1339.3 1717.0 -231.1 -98.0 -67.7"/>
+          <inertial pos="0 0 0" mass="50" diaginertia="2 2 2"/>
 
           <body name="boom" pos="0.326 0 0.389" euler="0 -30.0 0">
-            <joint name="boom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="100" damping="0" stiffness="500"/>
+            <joint name="boom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="400" />
             <geom name="boom" type="mesh" mesh="boom" material="boom" pos="0 0 0" euler="0 0 0"/>
-            <inertial pos="1.729 0 0.463" mass="80" fullinertia="8.7 176.8 169.0 -0.02 -1.4 0.002"/>
+            <inertial pos="1.729 0 0.463" mass=".33" diaginertia="0.00144107 0.00134228 0.000152047"/>
 
             <body name="arm" pos="3.945 0 -.55" euler="0 30.0 0">
-              <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="60" damping="0" stiffness="500"/>
+              <joint name="arm" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="400" />
               <geom name="arm" type="mesh" mesh="arm" material="arm" pos="0 0 0" euler="0 0 0"/>
-              <inertial pos="0.476 0 0.119" mass="60" fullinertia="1.5 30.2 29.0 -0.02 2.3 0.002"/>
+              <inertial pos="0.476 0 0.119" mass=".415" diaginertia="0.0005911 0.000546493 0.000155707"/>
               <body name="bucket_top" pos="1.929 0 -0.998" euler="0 -30 0">
-                <joint name="bucket_top" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
+                <joint name="bucket_top" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="400"/>
                 <geom name="bucket_top" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 2.35" condim="6"/>
-                <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+                <inertial pos="0 0 0" mass=".4" diaginertia="0.0005911 0.000546493 0.000155707"/>
                   <body name="bucket_top_grip" pos=".4 0 -.85" euler="0 0 0">
                       <geom name="bucket_top_grip" type="box" size=".04 .8 .04" material="boom" friction="10 .35 1" condim="6"/>
-                      <inertial pos="0 0 0" mass="10" fullinertia="8 9 10 0 0 0"/>
+                      <inertial pos="0 0 0" mass=".115" diaginertia="5.45707e-05 4.63101e-05 4.32692e-05"/>
                   </body>
               </body> <!-- Bucket -->
               <body name="bucket_bottom" pos="1.729 0 -0.998" euler="0 -20 180">
-                <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
+                <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="400"/>
                 <geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 2.35" condim="6"/>
-                <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>
+                <inertial pos="0 0 0" mass=".4" diaginertia="0.0005911 0.000546493 0.000155707"/>
                   <body name="bucket_bottom_grip" pos=".4 0 -.85" euler="0 0 0">
                       <geom name="bucket_bottom_grip" type="box" size=".04 .8 .04" material="boom" friction="10 .35 1" condim="6"/>
-                      <inertial pos="0 0 0" mass="10" fullinertia="8 9 10 0 0 0"/>
+                      <inertial pos="0 0 0" mass=".115" diaginertia="5.45707e-05 4.63101e-05 4.32692e-05"/>
                   </body>
               </body> <!-- Bucket -->
             </body> <!-- Arm -->

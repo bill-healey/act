@@ -51,16 +51,16 @@ def test_sim_teleop(record=True):
             episode = episode[:-1]
 
             data_dict = {
-                #'/observations/qpos': [],
+                '/observations/qpos': [],
                 '/observations/qvel': [],
                 '/action': [],
                 **{f'/observations/images/{cam}': [] for cam in camera_names}
             }
 
             for ts in episode:
-                #data_dict['/observations/qpos'].append(ts.observation['qpos'])
+                data_dict['/observations/qpos'].append(ts.observation['qpos'])
                 data_dict['/observations/qvel'].append(ts.observation['qvel'])
-                data_dict['/action'].append(ts.observation['qvel'])
+                data_dict['/action'].append(ts.observation['qpos'])
                 for cam in camera_names:
                     data_dict[f'/observations/images/{cam}'].append(ts.observation['images'][cam])
 
@@ -75,7 +75,7 @@ def test_sim_teleop(record=True):
                 image = obs.create_group('images')
                 for cam in camera_names:
                     image.create_dataset(cam, (episode_len, 480, 640, 3), dtype='uint8', chunks=(1, 480, 640, 3))
-                #obs.create_dataset('qpos', (episode_len, 12))
+                obs.create_dataset('qpos', (episode_len, task_config['action_len']))
                 obs.create_dataset('qvel', (episode_len, task_config['action_len']))
                 root.create_dataset('action', (episode_len, task_config['action_len']))
                 for name, array in data_dict.items():
