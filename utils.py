@@ -8,6 +8,7 @@ from torch.profiler import record_function
 import IPython
 e = IPython.embed
 
+
 class EpisodicDataset(torch.utils.data.Dataset):
     def __init__(self, episode_ids, dataset_dir, camera_names, norm_stats):
         super(EpisodicDataset).__init__()
@@ -99,7 +100,7 @@ def get_norm_stats(dataset_dir, num_episodes):
         action_std = all_action_data.std(dim=[0, 1], keepdim=True)
         action_std = torch.clip(action_std, 1e-2, np.inf) # clipping
 
-        # normalize qpos data
+        # normalize qvel data
         qpos_mean = all_qpos_data.mean(dim=[0, 1], keepdim=True)
         qpos_std = all_qpos_data.std(dim=[0, 1], keepdim=True)
         qpos_std = torch.clip(qpos_std, 1e-2, np.inf) # clipping
