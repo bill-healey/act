@@ -22,80 +22,44 @@ from constants import DT, XML_DIR, START_ARM_POSE, MASTER_GRIPPER_POSITION_NORMA
 from plot_handler import PlotHandler
 
 from sim_env import BOX_POSE
+from constants import SIM_TASK_CONFIGS
 from torch.profiler import profile, ProfilerActivity
 
 import IPython
 e = IPython.embed
 
+
 def main(args):
-    set_seed(2)
-    # command line parameters
-    is_eval = args['eval']
-    ckpt_dir = args['ckpt_dir']
-    policy_class = args['policy_class']
-    onscreen_render = args['onscreen_render']
     task_name = args['task_name']
-    batch_size_train = args['batch_size']
-    batch_size_val = args['batch_size']
-    num_epochs = args['num_epochs']
-
-    # get task parameters
-    is_sim = task_name[:4] == 'sim_'
-    if is_sim:
-        from constants import SIM_TASK_CONFIGS
-        task_config = SIM_TASK_CONFIGS[task_name]
-    else:
-        from aloha_scripts.constants import TASK_CONFIGS
-        task_config = TASK_CONFIGS[task_name]
-    dataset_dir = task_config['dataset_dir']
-    num_episodes = task_config['num_episodes']
-    episode_len = task_config['episode_len']
-    camera_names = task_config['camera_names']
-
-    # fixed parameters
-    state_dim = 12
-    lr_backbone = 1e-5
-    backbone = 'resnet18'
+    task_config = SIM_TASK_CONFIGS[task_name]
+    str_train_params = '_'.join([str(task_config[k]) for k in [
+        'episode_len',
+        'batch_size',
+        'action_len',
+        'kl_weight',
+        'hidden_dim',
+        'dim_feedforward',
+        'num_epochs',
+        'lr',
+        'seed',
+    ]])
+    config = dict(task_config, **{
+                     'task_name': task_name,
+                     'policy_class': 'ACT',
+                     'onscreen_render': args.get('onscreen_render', False),
+                     'is_eval': args.get('eval', False),
+                     'ckpt_dir': os.path.join(task_config['dataset_dir'], f'ckpt_{str_train_params}'),
+                     'lr_backbone': task_config['lr'],
+                     'backbone': 'resnet18',
+                     'enc_layers': 4,
+                     'dec_layers': 7,
+                     'nheads': 8,
+                     'num_queries': task_config['episode_len'],
+                     'state_dim': task_config['action_len']
+                     })
+    set_seed(task_config['seed'])
     torch.backends.cudnn.benchmark = True
-    if policy_class == 'ACT':
-        enc_layers = 4
-        dec_layers = 7
-        nheads = 8
-        policy_config = {'lr': args['lr'],
-                         'num_queries': task_config['episode_len'],
-                         'kl_weight': args['kl_weight'],
-                         'hidden_dim': args['hidden_dim'],
-                         'dim_feedforward': args['dim_feedforward'],
-                         'lr_backbone': lr_backbone,
-                         'backbone': backbone,
-                         'enc_layers': enc_layers,
-                         'dec_layers': dec_layers,
-                         'nheads': nheads,
-                         'camera_names': camera_names,
-                         }
-    elif policy_class == 'CNNMLP':
-        policy_config = {'lr': args['lr'], 'lr_backbone': lr_backbone, 'backbone' : backbone, 'num_queries': 1,
-                         'camera_names': camera_names,}
-    else:
-        raise NotImplementedError
-
-    config = {
-        'num_epochs': num_epochs,
-        'ckpt_dir': ckpt_dir,
-        'episode_len': episode_len,
-        'state_dim': state_dim,
-        'lr': args['lr'],
-        'policy_class': policy_class,
-        'onscreen_render': onscreen_render,
-        'policy_config': policy_config,
-        'task_name': task_name,
-        'seed': args['seed'],
-        'temporal_agg': args['temporal_agg'],
-        'camera_names': camera_names,
-        'real_robot': not is_sim
-    }
-
-    if is_eval:
+    if config['is_eval']:
         ckpt_names = [f'policy_best.ckpt']
         results = []
         for ckpt_name in ckpt_names:
@@ -108,12 +72,16 @@ def main(args):
         exit()
 
     # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], record_shapes=True) as prof:
-    train_dataloader, val_dataloader, stats, _ = load_data(dataset_dir, num_episodes, camera_names, batch_size_train, batch_size_val)
+    train_dataloader, val_dataloader, stats, _ = load_data(config['dataset_dir'],
+                                                           config['num_episodes'],
+                                                           config['camera_names'],
+                                                           config['batch_size'],
+                                                           config['batch_size'])
 
     # save dataset stats
-    if not os.path.isdir(ckpt_dir):
-        os.makedirs(ckpt_dir)
-    stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
+    if not os.path.isdir(config['ckpt_dir']):
+        os.makedirs(config['ckpt_dir'])
+    stats_path = os.path.join(config['ckpt_dir'], f'dataset_stats.pkl')
     with open(stats_path, 'wb') as f:
         pickle.dump(stats, f)
 
@@ -121,31 +89,11 @@ def main(args):
     best_epoch, min_val_loss, best_state_dict = best_ckpt_info
 
     # save best checkpoint
-    ckpt_path = os.path.join(ckpt_dir, f'policy_best.ckpt')
+    ckpt_path = os.path.join(config['ckpt_dir'], f'policy_best.ckpt')
     torch.save(best_state_dict, ckpt_path)
     print(f'Best ckpt, val loss {min_val_loss:.6f} @ epoch{best_epoch}')
     #print(prof.key_averages().table(sort_by="cuda_time_total"))
     #prof.export_chrome_trace("trace.json")
-
-
-def make_policy(policy_class, policy_config):
-    if policy_class == 'ACT':
-        policy = ACTPolicy(policy_config)
-    elif policy_class == 'CNNMLP':
-        policy = CNNMLPPolicy(policy_config)
-    else:
-        raise NotImplementedError
-    return policy
-
-
-def make_optimizer(policy_class, policy):
-    if policy_class == 'ACT':
-        optimizer = policy.configure_optimizers()
-    elif policy_class == 'CNNMLP':
-        optimizer = policy.configure_optimizers()
-    else:
-        raise NotImplementedError
-    return optimizer
 
 
 def get_image(ts, camera_names):
@@ -162,18 +110,15 @@ def eval_bc(config, ckpt_name, save_episode=True):
     set_seed(1000)
     ckpt_dir = config['ckpt_dir']
     state_dim = config['state_dim']
-    real_robot = config['real_robot']
-    policy_class = config['policy_class']
     onscreen_render = config['onscreen_render']
-    policy_config = config['policy_config']
+    policy_config = config
     camera_names = config['camera_names']
     max_timesteps = config['episode_len']
     task_name = config['task_name']
     temporal_agg = config['temporal_agg']
-
-    # load policy and stats
     ckpt_path = os.path.join(ckpt_dir, ckpt_name)
-    policy = make_policy(policy_class, policy_config)
+
+    policy = ACTPolicy(policy_config)
     loading_status = policy.load_state_dict(torch.load(ckpt_path))
     print(loading_status)
     policy.cuda()
@@ -182,27 +127,20 @@ def eval_bc(config, ckpt_name, save_episode=True):
     stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
     with open(stats_path, 'rb') as f:
         stats = pickle.load(f)
-
     pre_process = lambda s_qvel: (s_qvel - stats['qvel_mean']) / stats['qvel_std']
     post_process = lambda a: a * stats['action_std'] + stats['action_mean']
+    xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
+    physics = mujoco.Physics.from_xml_path(xml_path)
+    task = PickupTask()
+    env = control.Environment(physics, task, time_limit=config['episode_len'], control_timestep=DT,
+                              n_sub_steps=None, flat_observation=False)
 
-    # load environment
-    if real_robot:
-        from aloha_scripts.robot_utils import move_grippers # requires aloha
-        from aloha_scripts.real_env import make_real_env # requires aloha
-        env = make_real_env(init_node=True)
-        env_max_reward = 0
-    else:
-        xml_path = os.path.join(XML_DIR, f'single_viperx_pickup_cube.xml')
-        physics = mujoco.Physics.from_xml_path(xml_path)
-        task = PickupTask()
-        env = control.Environment(physics, task, time_limit=60, control_timestep=DT,
-                                  n_sub_steps=None, flat_observation=False)
-
-    query_frequency = policy_config['num_queries']
     if temporal_agg:
         query_frequency = 1
         num_queries = policy_config['num_queries']
+    else:
+        query_frequency = policy_config['num_queries']
+        num_queries = 0
 
     num_rollouts = 50
     episode_returns = []
@@ -210,7 +148,6 @@ def eval_bc(config, ckpt_name, save_episode=True):
     plot_handler = PlotHandler(policy_config['camera_names'])
     for rollout_id in range(num_rollouts):
         rollout_id += 0
-        ### set task
         if 'sim_transfer_cube' in task_name or 'sim_pickup_task' in task_name:
             BOX_POSE[0] = sample_box_pose() # used in sim reset
         elif 'sim_insertion' in task_name:
@@ -238,26 +175,20 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 qvel_history[:, t] = qvel
                 curr_image = get_image(ts, camera_names)
 
-                ### query policy
-                if config['policy_class'] == "ACT":
-                    if t % query_frequency == 0:
-                        all_actions = policy(qvel, curr_image)
-                    if temporal_agg:
-                        all_time_actions[[t], t:t+num_queries] = all_actions
-                        actions_for_curr_step = all_time_actions[:, t]
-                        actions_populated = torch.all(actions_for_curr_step != 0, axis=1)
-                        actions_for_curr_step = actions_for_curr_step[actions_populated]
-                        k = 0.01
-                        exp_weights = np.exp(-k * np.arange(len(actions_for_curr_step)))
-                        exp_weights = exp_weights / exp_weights.sum()
-                        exp_weights = torch.from_numpy(exp_weights).cuda().unsqueeze(dim=1)
-                        raw_action = (actions_for_curr_step * exp_weights).sum(dim=0, keepdim=True)
-                    else:
-                        raw_action = all_actions[:, t % query_frequency]
-                elif config['policy_class'] == "CNNMLP":
-                    raw_action = policy(qvel, curr_image)
+                if t % query_frequency == 0:
+                    all_actions = policy(qvel, curr_image)
+                if temporal_agg:
+                    all_time_actions[[t], t:t+num_queries] = all_actions
+                    actions_for_curr_step = all_time_actions[:, t]
+                    actions_populated = torch.all(actions_for_curr_step != 0, axis=1)
+                    actions_for_curr_step = actions_for_curr_step[actions_populated]
+                    k = 0.01
+                    exp_weights = np.exp(-k * np.arange(len(actions_for_curr_step)))
+                    exp_weights = exp_weights / exp_weights.sum()
+                    exp_weights = torch.from_numpy(exp_weights).cuda().unsqueeze(dim=1)
+                    raw_action = (actions_for_curr_step * exp_weights).sum(dim=0, keepdim=True)
                 else:
-                    raise NotImplementedError
+                    raw_action = all_actions[:, t % query_frequency]
 
                 ### post-process actions
                 raw_action = raw_action.squeeze(0).cpu().numpy()
@@ -271,10 +202,6 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 qvel_list.append(qvel_numpy)
                 target_qvel_list.append(target_qvel)
                 rewards.append(ts.reward)
-
-        if real_robot:
-            move_grippers([env.puppet_bot_left, env.puppet_bot_right], [PUPPET_GRIPPER_JOINT_OPEN] * 2, move_time=0.5)  # open
-            pass
 
         rewards = np.array(rewards)
         episode_return = np.sum(rewards[rewards!=None])
@@ -296,7 +223,6 @@ def eval_bc(config, ckpt_name, save_episode=True):
 
     print(summary_str)
 
-    # save success rate to txt
     result_file_name = 'result_' + ckpt_name.split('.')[0] + '.txt'
     with open(os.path.join(ckpt_dir, result_file_name), 'w') as f:
         f.write(summary_str)
@@ -310,21 +236,20 @@ def eval_bc(config, ckpt_name, save_episode=True):
 def forward_pass(data, policy):
     image_data, qvel_data, action_data, is_pad = data
     image_data, qvel_data, action_data, is_pad = image_data.cuda(), qvel_data.cuda(), action_data.cuda(), is_pad.cuda()
-    return policy(qvel_data, image_data, action_data, is_pad) # TODO remove None
+    return policy(qvel_data, image_data, action_data, is_pad)
 
 
 def train_bc(train_dataloader, val_dataloader, config):
     num_epochs = config['num_epochs']
     ckpt_dir = config['ckpt_dir']
     seed = config['seed']
-    policy_class = config['policy_class']
-    policy_config = config['policy_config']
+    policy_config = config
 
     set_seed(seed)
 
-    policy = make_policy(policy_class, policy_config)
+    policy = ACTPolicy(policy_config)
     policy.cuda()
-    optimizer = make_optimizer(policy_class, policy)
+    optimizer = policy.configure_optimizers()
     device = torch.device("cuda:0")
     policy = policy.to(device)
 
@@ -381,15 +306,11 @@ def train_bc(train_dataloader, val_dataloader, config):
 
     ckpt_path = os.path.join(ckpt_dir, f'policy_last.ckpt')
     torch.save(policy.state_dict(), ckpt_path)
-
     best_epoch, min_val_loss, best_state_dict = best_ckpt_info
     ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{best_epoch}_seed_{seed}.ckpt')
     torch.save(best_state_dict, ckpt_path)
     print(f'Training finished:\nSeed {seed}, val loss {min_val_loss:.6f} at epoch {best_epoch}')
-
-    # save training curves
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
-
     return best_ckpt_info
 
 
@@ -403,7 +324,6 @@ def plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed):
         val_values = [summary[key].item() for summary in validation_history]
         plt.plot(np.linspace(0, num_epochs-1, len(train_history)), train_values, label='train')
         plt.plot(np.linspace(0, num_epochs-1, len(validation_history)), val_values, label='validation')
-        # plt.ylim([-0.1, 1])
         plt.tight_layout()
         plt.legend()
         plt.title(key)
@@ -417,18 +337,5 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--onscreen_render', action='store_true')
-    parser.add_argument('--ckpt_dir', action='store', type=str, help='ckpt_dir', required=True)
-    parser.add_argument('--policy_class', action='store', type=str, help='policy_class, capitalize', required=True)
     parser.add_argument('--task_name', action='store', type=str, help='task_name', required=True)
-    parser.add_argument('--batch_size', action='store', type=int, help='batch_size', required=True)
-    parser.add_argument('--seed', action='store', type=int, help='seed', required=True)
-    parser.add_argument('--num_epochs', action='store', type=int, help='num_epochs', required=True)
-    parser.add_argument('--lr', action='store', type=float, help='lr', required=True)
-
-    # for ACT
-    parser.add_argument('--kl_weight', action='store', type=int, help='KL Weight', required=False)
-    parser.add_argument('--hidden_dim', action='store', type=int, help='hidden_dim', required=False)
-    parser.add_argument('--dim_feedforward', action='store', type=int, help='dim_feedforward', required=False)
-    parser.add_argument('--temporal_agg', action='store_true')
-    
     main(vars(parser.parse_args()))

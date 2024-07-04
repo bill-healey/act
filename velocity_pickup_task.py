@@ -49,7 +49,6 @@ class PickupTask(base.Task):
         return obs
 
     def get_reward(self, physics):
-        # return whether gripper is holding the box
         all_contact_pairs = []
         for i_contact in range(physics.data.ncon):
             id_geom_1 = physics.data.contact[i_contact].geom1
@@ -58,7 +57,8 @@ class PickupTask(base.Task):
             name_geom_2 = physics.model.id2name(id_geom_2, 'geom')
             contact_pair = (name_geom_1, name_geom_2)
             all_contact_pairs.append(contact_pair)
-        touch_gripper = ("red_box", "vx300s_right/10_right_gripper_finger") in all_contact_pairs
+        touch_gripper = ("red_box", "bucket_bottom") in all_contact_pairs or \
+                        ("red_box", "bucket_top") in all_contact_pairs
         touch_table = ("red_box", "table") in all_contact_pairs
         reward = 0
         if touch_gripper:

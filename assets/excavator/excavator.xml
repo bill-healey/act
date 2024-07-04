@@ -57,7 +57,7 @@ Copyright, 2023, Vilella Kenny.
                       <inertial pos="0 0 0" mass="10" fullinertia="8 9 10 0 0 0"/>
                   </body>
               </body> <!-- Bucket -->
-              <body name="bucket_bottom" pos="1.729 0 -0.998" euler="0 0 180">
+              <body name="bucket_bottom" pos="1.729 0 -0.998" euler="0 -20 180">
                 <joint name="bucket_bottom" type="hinge" axis="0 1 0" pos="0 0 0" frictionloss="80" damping="0" stiffness="800"/>
                 <geom name="bucket_bottom" type="mesh" mesh="bucket_refined" material="bucket" pos="0 0 0" euler="0 0 0" friction="10 .35 2.35" condim="6"/>
                 <inertial pos="0 0 0" mass="30" fullinertia="16 18 20 0 0 0"/>

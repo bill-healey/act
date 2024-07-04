@@ -18,7 +18,7 @@ def test_sim_teleop(record=True):
     camera_names = task_config['camera_names']
     if not os.path.isdir(dataset_dir):
         os.makedirs(dataset_dir, exist_ok=True)
-    xml_path = os.path.join(XML_DIR, f'excavator_scene.xml')
+    xml_path = os.path.join(XML_DIR, task_config['mujoco_xml'])
     physics = mujoco.Physics.from_xml_path(xml_path)
     task = PickupTask()
     teleop_handler = TeleOpHandler()

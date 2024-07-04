@@ -6,7 +6,7 @@ class PlotHandler:
 
     def __init__(self, camera_names):
         plt.ioff()
-        self.fig, self.axs = plt.subplots((len(camera_names) + 1) // 2, 2, figsize=(10,8))
+        self.fig, self.axs = plt.subplots((len(camera_names) + 1) // 2, 2, figsize=(5,4))
         self.camera_plots = {}
         self.camera_names = camera_names
 
