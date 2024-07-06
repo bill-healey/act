@@ -13,12 +13,13 @@ class PickupTask(base.Task):
         #self.action = np.array([0, -0.96, 1.16, 0, -0.3, 0, 0.02239, -0.02239])
         self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
         self.action = np.zeros(self.action_len)  # Initialize action array
+        self.action_impulse = np.zeros(self.action_len)
         self.max_reward = 5
 
     def before_step(self, action, physics):
-        self.action = action
-        physics.set_control(action)  # Apply actions to the physics
-        super().before_step(action, physics)
+        self.action = self.action + action
+        self.action_impulse = action
+        super().before_step(self.action, physics)
 
     def after_step(self, physics):
         super().after_step(physics)
@@ -35,13 +36,17 @@ class PickupTask(base.Task):
 
     @staticmethod
     def get_env_state(physics):
-        env_state = physics.data.qpos.copy()[SIM_TASK_CONFIGS['sim_pickup_task']['action_len']:]
+        # Red box joint is defined last as a free joint so should always be the last 7 DoF
+        env_state = physics.data.qpos.copy()[-7:]
         return env_state
 
     def get_observation(self, physics):
         obs = collections.OrderedDict()
-        obs['qpos'] = self.get_qpos(physics)[:5]
-        obs['qvel'] = self.get_qvel(physics)[:5]
+        # Red box joint is defined last as a free joint so last 7 qpos DoF (3 position + 4 quaternion)
+        #   and 6 qvel DoF (linear xyz and angular xyz)
+        obs['qpos'] = self.get_qpos(physics)[:-7]
+        obs['qvel'] = self.get_qvel(physics)[:-6]
+        obs['action'] = self.action_impulse.copy()
         obs['env_state'] = self.get_env_state(physics)
         obs['images'] = dict()
         for camera in SIM_TASK_CONFIGS['sim_pickup_task']['camera_names']:
@@ -82,7 +87,7 @@ class PickupTask(base.Task):
     @staticmethod
     def control_input_to_action(teleop_handler, action):
         teleop_actions = teleop_handler.get_actions()
-        action += [
+        action = [
             teleop_actions['waist_rotation'],
             teleop_actions['shoulder_elevation'],
             teleop_actions['wrist_elevation'],

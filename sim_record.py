@@ -60,7 +60,7 @@ def test_sim_teleop(record=True):
             for ts in episode:
                 data_dict['/observations/qpos'].append(ts.observation['qpos'])
                 data_dict['/observations/qvel'].append(ts.observation['qvel'])
-                data_dict['/action'].append(ts.observation['qpos'])
+                data_dict['/action'].append(ts.observation['action'])
                 for cam in camera_names:
                     data_dict[f'/observations/images/{cam}'].append(ts.observation['images'][cam])
 

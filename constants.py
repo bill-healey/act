@@ -33,7 +33,7 @@ SIM_TASK_CONFIGS = {
     'sim_pickup_task': {
         'dataset_dir': DATA_DIR + '\\excavator_qpos_dataset',
         'num_episodes': 10,
-        'episode_len': 120,
+        'episode_len': 180,
         'camera_names': ['top', 'angle'],
         'action_len': 5,
         'kl_weight': 10,

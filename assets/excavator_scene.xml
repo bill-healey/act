@@ -41,6 +41,11 @@
         </body>
 
     </worldbody>
+    <equality>
+        <weld body1="table" body2="caterpillar"/>
+        <weld body1="bucket_top" body2="bucket_top_grip" />
+        <weld body1="bucket_bottom" body2="bucket_bottom_grip" />
+    </equality>
     <contact>
         <exclude body1="bucket_top" body2="bucket_bottom"/>
         <exclude body1="bucket_top" body2="arm"/>
@@ -60,13 +65,13 @@
         <exclude body1="box" body2="caterpillar"/>
     </contact>
     <actuator>
-        <position name="Rotation" user="1" joint="chassis" kp="160"/>
-        <position name="Boom" user="1" joint="boom" kp="380"/>
-        <position name="Arm" user="1" joint="arm" kp="280"/>
+        <position name="Rotation" user="1" joint="chassis" kp="360"/>
+        <position name="Boom" user="1" joint="boom" kp="580"/>
+        <position name="Arm" user="1" joint="arm" kp="580"/>
         <position name="Bucket_Top" user="1" joint="bucket_top" kp="200" forcerange="-300 300"/>
         <position name="Bucket_Bottom" user="1" joint="bucket_bottom" kp="200" forcerange="-300 300"/>
     </actuator>
     <keyframe>
-        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0"/>
+        <key qpos="0 0 0 0 0 0 0 0 0 0 0 0"/>
     </keyframe>
 </mujoco>
