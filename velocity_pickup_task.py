@@ -8,7 +8,7 @@ from constants import SIM_TASK_CONFIGS
 class PickupTask(base.Task):
     def initialize_episode(self, physics):
         super().initialize_episode(physics)
-        random_pos = np.array([np.random.uniform(0, .15) + 6, np.random.uniform(.25, .75), .5])
+        random_pos = np.array([np.random.uniform(-.5, .5) + 6, np.random.uniform(-1.5, 1.5), .4])
         physics.named.data.qpos['red_box_joint'][:3] = random_pos
         #self.action = np.array([0, -0.96, 1.16, 0, -0.3, 0, 0.02239, -0.02239])
         self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
@@ -73,10 +73,11 @@ class PickupTask(base.Task):
         if touch_gripper and not touch_table:
             reward = 4
         table_z = physics.named.data.xpos['table'][2]
-        red_box_size = 0.02  # The height of the box from the MJCF definition
+        red_box_size = 0.2  # The height of the box from the MJCF definition
         red_box_current_z = physics.named.data.xpos['box'][2]
-        if touch_gripper and not touch_table and red_box_current_z > table_z + 5 * red_box_size:
+        if touch_gripper and (not touch_table) and red_box_current_z > table_z + 5 * red_box_size:
             reward = 5
+        print(f"{touch_gripper}  {touch_table}  {red_box_current_z > table_z + 5 * red_box_size}")
         return reward
 
     def action_spec(self, physics):

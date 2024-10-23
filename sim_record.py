@@ -27,8 +27,6 @@ def test_sim_teleop(record=True):
     success = []
     env = control.Environment(physics, task, time_limit=episode_len, control_timestep=DT,
                               n_sub_steps=None, flat_observation=False)
-    #ts = env.reset()
-    #viewer.launch(environment_loader=lambda: env)
     for episode_idx in range(num_episodes):
         ts = env.reset()
         episode = [ts]
@@ -44,8 +42,8 @@ def test_sim_teleop(record=True):
             success_status = episode_max_reward == env.task.max_reward
             success.append(int(success_status))
 
-            print(
-                f"{episode_idx=} {'Successful' if success_status else 'Failed'} with reward max {episode_max_reward} sum {episode_return}")
+            print(f"{episode_idx=} {'Successful' if success_status else 'Failed'} "
+                  f"with reward {env.task.max_reward}/{episode_max_reward} sum {episode_return}")
 
             # Truncate episode
             episode = episode[:-1]

@@ -72,14 +72,7 @@ def main(args):
         else:
             print(f"{episode_idx=} Failed")
 
-        joint_traj = [ts.observation['qpos'] for ts in episode]
-        # replace gripper pose with gripper control
-        gripper_ctrl_traj = [ts.observation['gripper_ctrl'] for ts in episode]
-        for joint, ctrl in zip(joint_traj, gripper_ctrl_traj):
-            left_ctrl = PUPPET_GRIPPER_POSITION_NORMALIZE_FN(ctrl[0])
-            right_ctrl = PUPPET_GRIPPER_POSITION_NORMALIZE_FN(ctrl[2])
-            joint[6] = left_ctrl
-            joint[6+7] = right_ctrl
+        joint_traj = [ts.observation['qvel'] for ts in episode]
 
         subtask_info = episode[0].observation['env_state'].copy() # box pose at step 0
 
@@ -106,7 +99,7 @@ def main(args):
             episode_replay.append(ts)
             if onscreen_render:
                 plt_img.set_data(ts.observation['images'][render_cam_name])
-                plt.pause(0.02)
+                plt.pause(0.01)
 
         episode_return = np.sum([ts.reward for ts in episode_replay[1:]])
         episode_max_reward = np.max([ts.reward for ts in episode_replay[1:]])

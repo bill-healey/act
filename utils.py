@@ -24,7 +24,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         with record_function("__getitem__"):
-            sample_full_episode = False # hardcode
+            sample_full_episode = True # hardcode
 
             episode_id = self.episode_ids[index]
             dataset_path = os.path.join(self.dataset_dir, f'episode_success_{episode_id}.hdf5')
