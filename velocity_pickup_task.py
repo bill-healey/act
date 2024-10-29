@@ -10,14 +10,13 @@ class PickupTask(base.Task):
         super().initialize_episode(physics)
         random_pos = np.array([np.random.uniform(-.5, .5) + 6, np.random.uniform(-1.5, 1.5), .4])
         physics.named.data.qpos['red_box_joint'][:3] = random_pos
-        #self.action = np.array([0, -0.96, 1.16, 0, -0.3, 0, 0.02239, -0.02239])
         self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
         self.action = np.zeros(self.action_len)  # Initialize action array
         self.action_impulse = np.zeros(self.action_len)
         self.max_reward = 5
 
     def before_step(self, action, physics):
-        self.action = self.action + action
+        self.action = action
         self.action_impulse = action
         super().before_step(self.action, physics)
 
@@ -77,7 +76,7 @@ class PickupTask(base.Task):
         red_box_current_z = physics.named.data.xpos['box'][2]
         if touch_gripper and (not touch_table) and red_box_current_z > table_z + 5 * red_box_size:
             reward = 5
-        print(f"{touch_gripper}  {touch_table}  {red_box_current_z > table_z + 5 * red_box_size}")
+        #print(f"{touch_gripper}  {touch_table}  {red_box_current_z > table_z + 5 * red_box_size}")
         return reward
 
     def action_spec(self, physics):

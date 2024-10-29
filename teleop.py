@@ -42,10 +42,14 @@ class TeleOpHandler(threading.Thread):
             pygame.event.pump()  # Handle internal events
             if self.joystick:
                 with self.lock:
-                    self.joystick_input['waist_rotation'] = self.joystick.get_axis(4) * -0.03
-                    self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(3) * -0.02
-                    self.joystick_input['wrist_elevation'] = self.joystick.get_axis(1) * -0.05
-                    self.joystick_input['gripper_rotation'] = self.joystick.get_axis(0) * 0.1
+                    #self.joystick_input['waist_rotation'] = self.joystick.get_axis(4) * -0.03
+                    #self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(3) * -0.02
+                    #self.joystick_input['wrist_elevation'] = self.joystick.get_axis(1) * -0.05
+                    #self.joystick_input['gripper_rotation'] = self.joystick.get_axis(0) * 0.1
+                    self.joystick_input['waist_rotation'] = self.joystick.get_axis(4) * -1
+                    self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(3) * -1
+                    self.joystick_input['wrist_elevation'] = self.joystick.get_axis(1) * -1
+                    self.joystick_input['gripper_rotation'] = self.joystick.get_axis(0) * 1
             time.sleep(0.01)  # Limit the polling rate
 
     def on_press(self, key):

@@ -35,8 +35,9 @@
             <joint name="red_box_joint" type="free" frictionloss="1" />
             <!--<geom name="cube_geom" type="box" size="0.05 0.05 0.05" rgba="1 0 0 1"
                   solimp="0.9 0.99 0.001" solref="0.02 1" friction="10 1.5 1.5"/>-->
-            <inertial pos="0 0 0" mass=".5" diaginertia=".001 .001 .001" />
-            <geom condim="6" solimp="2 1 0.01" solref="0.01 1" friction="1 0.1 0.01" pos="0 0 0" size=".2 .2 .2" type="box" name="red_box" rgba="1 0 0 1" />
+            <inertial pos="0 0 0" mass=".5" diaginertia=".0015 .0015 .0015" />
+            <geom condim="6" solimp="2 1 0.01" solref="0.01 1" friction="1 0.1 0.01" pos="0 0 0" size=".2 .2 .2" type="box" name="red_box" rgba="1 0 0 1"/>
+            <!--geom condim="6" solimp="0.95 0.99 0.001" solref="0.005 2" friction="1.5 0.5 0.5" pos="0 0 0" size=".2 .2 .2" type="box" name="red_box" rgba="1 0 0 1"/-->
         </body>
 
     </worldbody>
@@ -64,11 +65,11 @@
         <exclude body1="box" body2="caterpillar"/>
     </contact>
     <actuator>
-        <position name="Rotation" user="1" joint="chassis" kp="360"/>
-        <position name="Boom" user="1" joint="boom" kp="580"/>
-        <position name="Arm" user="1" joint="arm" kp="580"/>
-        <position name="Bucket_Top" user="1" joint="bucket_top" kp="200" forcerange="-300 300"/>
-        <position name="Bucket_Bottom" user="1" joint="bucket_bottom" kp="200" forcerange="-300 300"/>
+        <motor name="Rotation" user="1" joint="chassis" gear="150"/>
+        <motor name="Boom" user="1" joint="boom" gear="170" ctrlrange="-100 100"/>
+        <motor name="Arm" user="1" joint="arm" gear="90"/>
+        <motor name="Bucket_Top" user="1" joint="bucket_top" gear="100" forcerange="-300 300"/>
+        <motor name="Bucket_Bottom" user="1" joint="bucket_bottom" gear="100" forcerange="-300 300"/>
     </actuator>
     <keyframe>
         <key qpos="0 0 0 0 0 0 0 0 0 0 0 0"/>

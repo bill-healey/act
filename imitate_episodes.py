@@ -10,24 +10,22 @@ from einops import rearrange
 from dm_control import mujoco
 from dm_control.rl import control
 
-from constants import DT
-from constants import PUPPET_GRIPPER_JOINT_OPEN
-from utils import load_data # data functions
-from utils import sample_box_pose, sample_insertion_pose # robot functions
-from utils import compute_dict_mean, set_seed, detach_dict # helper functions
-from policy import ACTPolicy, CNNMLPPolicy
+from utils import load_data
+from utils import sample_box_pose
+from utils import compute_dict_mean, set_seed, detach_dict
+from policy import ACTPolicy
 from visualize_episodes import save_videos
 from sim_record import PickupTask
-from constants import DT, XML_DIR, START_ARM_POSE, MASTER_GRIPPER_POSITION_NORMALIZE_FN
+from constants import DT, XML_DIR
 from plot_handler import PlotHandler
 
-from sim_env import BOX_POSE
 from constants import SIM_TASK_CONFIGS
 from torch.profiler import profile, ProfilerActivity
 
 import IPython
 e = IPython.embed
 
+BOX_POSE = [None] # to be changed from outside
 
 def main(args):
     task_name = args['task_name']
@@ -127,7 +125,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
     stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
     with open(stats_path, 'rb') as f:
         stats = pickle.load(f)
-    pre_process = lambda s_qpos: (s_qpos - stats['qpos_mean']) / stats['qpos_std']
+    pre_process = lambda s_qpos: 50*(s_qpos - stats['qpos_mean']) / stats['qpos_std']
     post_process = lambda a: a * stats['action_std'] + stats['action_mean']
     xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
     physics = mujoco.Physics.from_xml_path(xml_path)
@@ -148,17 +146,12 @@ def eval_bc(config, ckpt_name, save_episode=True):
     plot_handler = PlotHandler(policy_config['camera_names'])
     for rollout_id in range(num_rollouts):
         rollout_id += 0
-        if 'sim_transfer_cube' in task_name or 'sim_pickup_task' in task_name:
-            BOX_POSE[0] = sample_box_pose() # used in sim reset
-        elif 'sim_insertion' in task_name:
-            BOX_POSE[0] = np.concatenate(sample_insertion_pose()) # used in sim reset
+        BOX_POSE[0] = sample_box_pose()
         ts = env.reset()
         if temporal_agg:
             all_time_actions = torch.zeros([max_timesteps, max_timesteps+num_queries, state_dim]).cuda()
         qpos_history = torch.zeros((1, max_timesteps, state_dim)).cuda()
         image_list = []
-        qpos_list = []
-        target_qpos_list = []
         rewards = []
         with torch.inference_mode():
             for t in range(max_timesteps):
@@ -169,7 +162,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
                     image_list.append(obs['images'])
                 else:
                     image_list.append({'main': obs['image']})
-                qpos_numpy = np.array(obs['qvel'])  #todo: changed from qpos
+                qpos_numpy = np.array(obs['qvel'])  #todo: changed from qpos, seems to have no effect
                 qpos = pre_process(qpos_numpy)
                 qpos = torch.from_numpy(qpos).float().cuda().unsqueeze(0)
                 qpos_history[:, t] = qpos
@@ -199,8 +192,6 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 ts = env.step(target_qpos[:5])
 
                 ### for visualization
-                qpos_list.append(qpos_numpy)
-                target_qpos_list.append(target_qpos)
                 rewards.append(ts.reward)
 
         rewards = np.array(rewards)

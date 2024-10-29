@@ -6,11 +6,7 @@ from dm_control import mujoco
 from dm_control.rl import control
 from dm_control.suite import base
 
-from constants import DT, XML_DIR, START_ARM_POSE
-from constants import PUPPET_GRIPPER_POSITION_UNNORMALIZE_FN
-from constants import MASTER_GRIPPER_POSITION_NORMALIZE_FN
-from constants import PUPPET_GRIPPER_POSITION_NORMALIZE_FN
-from constants import PUPPET_GRIPPER_VELOCITY_NORMALIZE_FN
+from constants import DT, XML_DIR
 
 import IPython
 e = IPython.embed
@@ -58,11 +54,8 @@ class BimanualViperXTask(base.Task):
     def before_step(self, action, physics):
         left_arm_action = action[:6]
         right_arm_action = action[7:7+6]
-        normalized_left_gripper_action = action[6]
-        normalized_right_gripper_action = action[7+6]
-
-        left_gripper_action = PUPPET_GRIPPER_POSITION_UNNORMALIZE_FN(normalized_left_gripper_action)
-        right_gripper_action = PUPPET_GRIPPER_POSITION_UNNORMALIZE_FN(normalized_right_gripper_action)
+        left_gripper_action = action[6]
+        right_gripper_action = action[7+6]
 
         full_left_gripper_action = [left_gripper_action, -left_gripper_action]
         full_right_gripper_action = [right_gripper_action, -right_gripper_action]
