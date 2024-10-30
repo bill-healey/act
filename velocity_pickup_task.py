@@ -77,7 +77,7 @@ class PickupTask(base.Task):
         red_box_current_z = physics.named.data.xpos['box'][2]
         if touch_gripper and (not touch_table) and red_box_current_z > table_z + 5 * red_box_size:
             reward = 5
-        print(f"{touch_gripper}  {touch_table}  {red_box_current_z > table_z + 5 * red_box_size}")
+        #print(f"{touch_gripper}  {touch_table}  {red_box_current_z > table_z + 5 * red_box_size}")
         return reward
 
     def action_spec(self, physics):
