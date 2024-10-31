@@ -37,15 +37,29 @@ class TeleOpHandler(threading.Thread):
             'gripper_rotation': .0
         }
 
+    @staticmethod
+    def apply_deadzone_and_exponential(input_value, deadzone=0.2, exponent=1):
+        # Apply deadzone
+        if abs(input_value) < deadzone:
+            return 0
+        # Adjust for deadzone and apply exponential scaling
+        adjusted_input = (abs(input_value) - deadzone) / (1 - deadzone)  # Normalize
+        adjusted_input = adjusted_input ** exponent * (1 if input_value > 0 else -1)
+        return adjusted_input
+
     def run(self):
         while self.running:
             pygame.event.pump()  # Handle internal events
             if self.joystick:
                 with self.lock:
-                    self.joystick_input['waist_rotation'] = self.joystick.get_axis(4) * -0.03
-                    self.joystick_input['shoulder_elevation'] = self.joystick.get_axis(3) * -0.02
-                    self.joystick_input['wrist_elevation'] = self.joystick.get_axis(1) * -0.05
-                    self.joystick_input['gripper_rotation'] = self.joystick.get_axis(0) * 0.1
+                    self.joystick_input['waist_rotation'] = self.apply_deadzone_and_exponential(
+                        self.joystick.get_axis(4)) * -0.03
+                    self.joystick_input['shoulder_elevation'] = self.apply_deadzone_and_exponential(
+                        self.joystick.get_axis(3)) * -0.02
+                    self.joystick_input['wrist_elevation'] = self.apply_deadzone_and_exponential(
+                        self.joystick.get_axis(1)) * -0.05
+                    self.joystick_input['gripper_rotation'] = self.apply_deadzone_and_exponential(
+                        self.joystick.get_axis(0)) * 0.1
             time.sleep(0.01)  # Limit the polling rate
 
     def on_press(self, key):
