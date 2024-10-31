@@ -40,7 +40,7 @@ SIM_TASK_CONFIGS = {
         'hidden_dim': 256,
         'batch_size': 8,#4096,
         'dim_feedforward': 32,
-        'num_epochs': 12000,
+        'num_epochs': 24000,
         'lr': 1e-5,
         'seed': 42,
         'temporal_agg': False,
