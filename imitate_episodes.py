@@ -125,7 +125,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
     stats_path = os.path.join(ckpt_dir, f'dataset_stats.pkl')
     with open(stats_path, 'rb') as f:
         stats = pickle.load(f)
-    pre_process = lambda s_qpos: 50*(s_qpos - stats['qpos_mean']) / stats['qpos_std']
+    pre_process = lambda s_qpos: (s_qpos - stats['qpos_mean']) / stats['qpos_std']
     post_process = lambda a: a * stats['action_std'] + stats['action_mean']
     xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
     physics = mujoco.Physics.from_xml_path(xml_path)
@@ -162,7 +162,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
                     image_list.append(obs['images'])
                 else:
                     image_list.append({'main': obs['image']})
-                qpos_numpy = np.array(obs['qvel'])  #todo: changed from qpos, seems to have no effect
+                qpos_numpy = np.array(obs['qpos']) # seems to have no effect
                 qpos = pre_process(qpos_numpy)
                 qpos = torch.from_numpy(qpos).float().cuda().unsqueeze(0)
                 qpos_history[:, t] = qpos
@@ -189,7 +189,8 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 target_qpos = action
 
                 ### step the environment
-                ts = env.step(target_qpos[:5])
+                #ts = env.step(target_qpos[:5])
+                ts = env.step(target_qpos[-7:])
 
                 ### for visualization
                 rewards.append(ts.reward)

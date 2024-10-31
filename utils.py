@@ -37,7 +37,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
                 else:
                     start_ts = np.random.choice(episode_len)
                 # get observation at start_ts only
-                #qpos = root['/observations/qpos'][start_ts]
+                qpos = root['/observations/qpos'][start_ts]
                 qvel = root['/observations/qvel'][start_ts]
                 image_dict = dict()
                 for cam_name in self.camera_names:
@@ -64,7 +64,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
 
             # construct observations
             image_data = torch.from_numpy(all_cam_images)
-            qpos_data = torch.from_numpy(qvel).float()
+            qpos_data = torch.from_numpy(qpos).float()
             action_data = torch.from_numpy(padded_action).float()
             is_pad = torch.from_numpy(is_pad).bool()
 
@@ -86,10 +86,10 @@ def get_norm_stats(dataset_dir, num_episodes):
         for episode_idx in range(num_episodes):
             dataset_path = os.path.join(dataset_dir, f'episode_success_{episode_idx}.hdf5')
             with h5py.File(dataset_path, 'r') as root:
-                #qpos = root['/observations/qpos'][()]
+                qpos = root['/observations/qpos'][()]
                 qvel = root['/observations/qvel'][()]
                 action = root['/action'][()]
-            all_qpos_data.append(torch.from_numpy(qvel))
+            all_qpos_data.append(torch.from_numpy(qpos))
             all_action_data.append(torch.from_numpy(action))
         all_qpos_data = torch.stack(all_qpos_data)
         all_action_data = torch.stack(all_action_data)
@@ -107,7 +107,7 @@ def get_norm_stats(dataset_dir, num_episodes):
 
         stats = {"action_mean": action_mean.numpy().squeeze(), "action_std": action_std.numpy().squeeze(),
                  "qpos_mean": qpos_mean.numpy().squeeze(), "qpos_std": qpos_std.numpy().squeeze(),
-                 "example_qpos": qvel}
+                 "example_qpos": qpos}
 
     return stats
 

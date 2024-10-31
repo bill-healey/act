@@ -65,11 +65,11 @@
         <exclude body1="box" body2="caterpillar"/>
     </contact>
     <actuator>
-        <motor name="Rotation" user="1" joint="chassis" gear="150"/>
-        <motor name="Boom" user="1" joint="boom" gear="170" ctrlrange="-100 100"/>
-        <motor name="Arm" user="1" joint="arm" gear="90"/>
-        <motor name="Bucket_Top" user="1" joint="bucket_top" gear="100" forcerange="-300 300"/>
-        <motor name="Bucket_Bottom" user="1" joint="bucket_bottom" gear="100" forcerange="-300 300"/>
+        <position name="Rotation" user="1" joint="chassis" kp="860" kv="100"/>
+        <position name="Boom" user="1" joint="boom" kp="800" ctrlrange="-100 100"/>
+        <position name="Arm" user="1" joint="arm" kp="380"/>
+        <position name="Bucket_Top" user="1" joint="bucket_top" kp="200" forcerange="-300 300"/>
+        <position name="Bucket_Bottom" user="1" joint="bucket_bottom" kp="200" forcerange="-300 300"/>
     </actuator>
     <keyframe>
         <key qpos="0 0 0 0 0 0 0 0 0 0 0 0"/>

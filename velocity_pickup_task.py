@@ -16,7 +16,7 @@ class PickupTask(base.Task):
         self.max_reward = 5
 
     def before_step(self, action, physics):
-        self.action = action
+        self.action += action
         self.action_impulse = action
         super().before_step(self.action, physics)
 
