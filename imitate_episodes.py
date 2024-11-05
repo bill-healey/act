@@ -105,7 +105,7 @@ def get_image(ts, camera_names):
 
 
 def eval_bc(config, ckpt_name, save_episode=True):
-    set_seed(1000)
+    set_seed(1001)
     ckpt_dir = config['ckpt_dir']
     state_dim = config['state_dim']
     onscreen_render = config['onscreen_render']
