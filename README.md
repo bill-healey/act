@@ -1,6 +1,20 @@
 # ACT: Action Chunking with Transformers
 
-### *New*: [ACT tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing)
+### New Additions:
+- Adds mujoco model to match excavator toy
+- Simplifies data-loading for training performance improvements.
+- Adds gamepad control input to generate training data.
+- Adds support for resuming and adding on to training runs.
+- Adds a new pickup task that randomizes the start position of the cube
+- Adds script to output eval videos to animated gif
+
+Here's an example of the evaluation thumbnails:
+
+![Evaluation Thumbnails](./eval_thumbnails.gif)
+
+### Original Readme:
+
+### [ACT tuning tips](https://docs.google.com/document/d/1FVIZfoALXg_ZkYKaYVh-qOlaXveq5CtvJHXkY25eYhs/edit?usp=sharing)
 TL;DR: if your ACT policy is jerky or pauses in the middle of an episode, just train for longer! Success rate and smoothness can improve way after loss plateaus.
 
 #### Project Website: https://tonyzhaozh.github.io/aloha/
