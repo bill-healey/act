@@ -105,7 +105,7 @@ def get_image(ts, camera_names):
 
 
 def eval_bc(config, ckpt_name, save_episode=True):
-    set_seed(1000)
+    set_seed(1001)
     ckpt_dir = config['ckpt_dir']
     state_dim = config['state_dim']
     onscreen_render = config['onscreen_render']
@@ -245,12 +245,27 @@ def train_bc(train_dataloader, val_dataloader, config):
     device = torch.device("cuda:0")
     policy = policy.to(device)
 
-    train_history = []
-    validation_history = []
-    min_val_loss = np.inf
-    best_ckpt_info = None
-    min_next_ckpt_epoch = 25
-    for epoch in tqdm(range(num_epochs)):
+    # Check if there is an existing checkpoint to resume from
+    resume_ckpt_path = os.path.join(ckpt_dir, 'policy_last.ckpt')
+    if os.path.exists(resume_ckpt_path):
+        checkpoint = torch.load(resume_ckpt_path)
+        start_epoch = checkpoint['epoch'] + 1
+        best_val_loss = checkpoint['best_val_loss']
+        best_ckpt_info = checkpoint
+        policy.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        train_history = checkpoint.get('train_history', [])
+        validation_history = checkpoint.get('validation_history', [])
+        print(f'Resuming training from epoch {start_epoch} with best val loss {best_val_loss:.6f}')
+    else:
+        start_epoch = 0
+        best_val_loss = np.inf
+        best_ckpt_info = None
+        train_history = []
+        validation_history = []
+
+    min_next_ckpt_epoch = start_epoch+25
+    for epoch in tqdm(range(start_epoch, start_epoch+num_epochs)):
         print(f'\nEpoch {epoch}')
         # validation
         with torch.inference_mode():
@@ -263,10 +278,10 @@ def train_bc(train_dataloader, val_dataloader, config):
             validation_history.append(epoch_summary)
 
             epoch_val_loss = epoch_summary['loss']
-            if epoch_val_loss < min_val_loss:
+            if epoch_val_loss < best_val_loss:
                 print(f"New Best Validation Loss {epoch_val_loss}")
-                min_val_loss = epoch_val_loss
-                best_ckpt_info = (epoch, min_val_loss, deepcopy(policy.state_dict()))
+                best_val_loss = epoch_val_loss
+                best_ckpt_info = (epoch, best_val_loss, deepcopy(policy.state_dict()))
                 if epoch > min_next_ckpt_epoch:
                     min_next_ckpt_epoch = epoch + 50
                     ckpt_path = os.path.join(ckpt_dir, f'policy_seed_{seed}_temp_best.ckpt')
@@ -297,11 +312,18 @@ def train_bc(train_dataloader, val_dataloader, config):
         print(summary_string)
 
     ckpt_path = os.path.join(ckpt_dir, f'policy_last.ckpt')
-    torch.save(policy.state_dict(), ckpt_path)
-    best_epoch, min_val_loss, best_state_dict = best_ckpt_info
+    torch.save({
+        'epoch': epoch,
+        'best_val_loss': best_val_loss,
+        'model_state_dict': policy.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'train_history': train_history,
+        'validation_history': validation_history
+    }, ckpt_path)
+    best_epoch, best_val_loss, best_state_dict = best_ckpt_info
     ckpt_path = os.path.join(ckpt_dir, f'policy_epoch_{best_epoch}_seed_{seed}.ckpt')
     torch.save(best_state_dict, ckpt_path)
-    print(f'Training finished:\nSeed {seed}, val loss {min_val_loss:.6f} at epoch {best_epoch}')
+    print(f'Training finished:\nSeed {seed}, val loss {best_val_loss:.6f} at epoch {best_epoch}')
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
     return best_ckpt_info
 
