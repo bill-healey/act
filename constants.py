@@ -1,8 +1,7 @@
 import pathlib
 
-### Task parameters
 DATA_DIR = 'data'
-SIM_TASK_CONFIGS = {
+TASK_CONFIGS = {
     'sim_transfer_cube_scripted':{
         'dataset_dir': DATA_DIR + '/sim_transfer_cube_scripted',
         'num_episodes': 50,
@@ -46,7 +45,24 @@ SIM_TASK_CONFIGS = {
         'temporal_agg': False,
         'mujoco_xml': 'excavator_scene.xml',
     },
+    'roarm_pickup_task': {
+        'dataset_dir': DATA_DIR + '\\roam_dec27',
+        'num_episodes': 3,
+        'episode_len': 230,
+        'camera_names': ['top', 'angle'],
+        'camera_indexes': [1, 2],
+        'action_len': 4,
+        'kl_weight': 10,
+        'hidden_dim': 256,
+        'batch_size': 8,#4096,
+        'dim_feedforward': 32,
+        'num_epochs': 24000,
+        'lr': 1e-5,
+        'seed': 42,
+        'temporal_agg': False,
+        'mujoco_xml': 'excavator_scene.xml',
+    },
 }
 
-DT = 0.02
+DT = 0.05
 XML_DIR = str(pathlib.Path(__file__).parent.resolve()) + '/assets/' # note: absolute path

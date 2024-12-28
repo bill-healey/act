@@ -66,12 +66,12 @@ class RoArm:
             self.queue_next_response = response_expected
             self.serial_response_acked = False
             self.serial.write(command_str.encode() + b'\n')
-            print(f"Sent: {command_str.strip()}")
+            #print(f"Sent: {command_str.strip()}")
             ack = self.response_queue.get(timeout=100)
-            print(f"ACK: {ack}")
+            #print(f"ACK: {ack}")
             if response_expected:
                 response = self.response_queue.get(timeout=100)
-                print(f"Received: {response}")
+                #print(f"Received: {response}")
                 return json.loads(response)
             else:
                 return None
@@ -90,6 +90,9 @@ class RoArm:
             brightness (int): LED brightness (0-255)
         """
         return self._send_command({"T": 114, "led": brightness})
+
+    def set_torque_lock(self, lock=False):
+        return self._send_command({"T": 210, "cmd": 1 if lock else 0})
 
     def get_position(self):
         """
@@ -140,7 +143,7 @@ def main():
         arm_pos['y'] = initial_pos['y'] - pos[1] * scale_factor
         arm_pos['z'] = max(-100, initial_pos['z'] + pos[2] * scale_factor)
         arm_pos['t'] = clamp(
-            arm_pos['t'] + (axes[1] + axes[7]) * .05 + .03 * buttons[1] - .03 * buttons[5],
+            arm_pos['t'] + (axes[1] + axes[7]) * .05 - .03 * buttons[1] + .03 * buttons[5],
             1.5, 3.3)
         arm_pos['spd'] = 6
         arm.move_to_position(**arm_pos)
@@ -148,6 +151,10 @@ def main():
     arm = RoArm()
     arm.set_led(180)
     try:
+        #arm.set_torque_lock(False)
+        #while True:
+        #    print(arm.get_position())
+        #    time.sleep(1)
         initial_pos = arm.get_position()
         print("Arm Start Position:", initial_pos)
         arm_pos = initial_pos.copy()

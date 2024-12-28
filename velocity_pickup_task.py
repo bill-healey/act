@@ -2,7 +2,7 @@ import collections
 import numpy as np
 from dm_control.suite import base
 from dm_env import specs
-from constants import SIM_TASK_CONFIGS
+from constants import TASK_CONFIGS
 
 
 class PickupTask(base.Task):
@@ -10,7 +10,7 @@ class PickupTask(base.Task):
         super().initialize_episode(physics)
         random_pos = np.array([np.random.uniform(-.5, .5) + 6, np.random.uniform(-1.5, 1.5), .4])
         physics.named.data.qpos['red_box_joint'][:3] = random_pos
-        self.action_len = SIM_TASK_CONFIGS['sim_pickup_task']['action_len']
+        self.action_len = TASK_CONFIGS['sim_pickup_task']['action_len']
         self.action = np.zeros(self.action_len)  # Initialize action array
         self.action_impulse = np.zeros(self.action_len)
         self.max_reward = 5
@@ -48,7 +48,7 @@ class PickupTask(base.Task):
         obs['action'] = self.action_impulse.copy()
         obs['env_state'] = self.get_env_state(physics)
         obs['images'] = dict()
-        for camera in SIM_TASK_CONFIGS['sim_pickup_task']['camera_names']:
+        for camera in TASK_CONFIGS['sim_pickup_task']['camera_names']:
             obs['images'][camera] = physics.render(height=480, width=640, camera_id=camera)
         return obs
 

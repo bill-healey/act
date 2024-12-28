@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pickle
 import argparse
+import cv2
 import matplotlib.pyplot as plt
 from copy import deepcopy
 from tqdm import tqdm
@@ -18,8 +19,9 @@ from visualize_episodes import save_videos
 from sim_record import PickupTask
 from constants import DT, XML_DIR
 from plot_handler import PlotHandler
+from roarm import RoArm
 
-from constants import SIM_TASK_CONFIGS
+from constants import TASK_CONFIGS
 from torch.profiler import profile, ProfilerActivity
 
 import IPython
@@ -29,7 +31,7 @@ BOX_POSE = [None] # to be changed from outside
 
 def main(args):
     task_name = args['task_name']
-    task_config = SIM_TASK_CONFIGS[task_name]
+    task_config = TASK_CONFIGS[task_name]
     str_train_params = '_'.join([str(task_config[k]) for k in [
         'episode_len',
         'batch_size',
@@ -127,11 +129,21 @@ def eval_bc(config, ckpt_name, save_episode=True):
         stats = pickle.load(f)
     pre_process = lambda s_qpos: (s_qpos - stats['qpos_mean']) / stats['qpos_std']
     post_process = lambda a: a * stats['action_std'] + stats['action_mean']
-    xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
-    physics = mujoco.Physics.from_xml_path(xml_path)
-    task = PickupTask()
-    env = control.Environment(physics, task, time_limit=config['episode_len'], control_timestep=DT,
-                              n_sub_steps=None, flat_observation=False)
+
+    is_sim = ('sim' in task_name.lower())
+    caps = None
+    arm = None
+
+    if is_sim:
+        xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
+        physics = mujoco.Physics.from_xml_path(xml_path)
+        task = PickupTask()
+        env = control.Environment(physics, task, time_limit=config['episode_len'], control_timestep=DT,
+                                  n_sub_steps=None, flat_observation=False)
+    else:
+        arm = RoArm()
+        arm.set_led(180)
+        caps = [cv2.VideoCapture(idx, cv2.CAP_DSHOW) for idx in config['camera_indexes']]
 
     if temporal_agg:
         query_frequency = 1
@@ -145,9 +157,10 @@ def eval_bc(config, ckpt_name, save_episode=True):
     highest_rewards = []
     plot_handler = PlotHandler(policy_config['camera_names'])
     for rollout_id in range(num_rollouts):
-        rollout_id += 0
-        BOX_POSE[0] = sample_box_pose()
-        ts = env.reset()
+        ts = None
+        if is_sim:
+            BOX_POSE[0] = sample_box_pose()
+            ts = env.reset()
         if temporal_agg:
             all_time_actions = torch.zeros([max_timesteps, max_timesteps+num_queries, state_dim]).cuda()
         qpos_history = torch.zeros((1, max_timesteps, state_dim)).cuda()
@@ -155,7 +168,25 @@ def eval_bc(config, ckpt_name, save_episode=True):
         rewards = []
         with torch.inference_mode():
             for t in range(max_timesteps):
-                obs = ts.observation
+                if is_sim:
+                    obs = ts.observation
+                else:
+                    frames = {}
+                    for i, cam_name in enumerate(config['camera_names']):
+                        ret, frame = caps[i].read()
+                        if ret:
+                            frames[cam_name] = frame
+                        else:
+                            frames[cam_name] = None
+                    pos = arm.get_position()
+                    qpos = [pos['b'], pos['s'], pos['e'], pos['t']]
+                    qvel = np.subtract(qpos, prev_qpos).tolist() if prev_qpos else [0] * 4
+                    prev_qpos = qpos
+                    obs = {
+                        'images': frames,
+                        'qpos': qpos,
+                        'qvel': qvel,
+                    }
                 if onscreen_render:
                     plot_handler.render_images(obs['images'])
                 if 'images' in obs:
@@ -189,11 +220,14 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 target_qpos = action
 
                 ### step the environment
-                #ts = env.step(target_qpos[:5])
-                ts = env.step(target_qpos[-7:])
-
-                ### for visualization
-                rewards.append(ts.reward)
+                if is_sim:
+                    #ts = env.step(target_qpos[:5])
+                    ts = env.step(target_qpos[-7:])
+                    rewards.append(ts.reward)
+                else:
+                    b, s, e, t = action[0], action[1], action[2], action[3]
+                    arm.move_servos(b, s, e, t)
+                    rewards.append('TODO')
 
         rewards = np.array(rewards)
         episode_return = np.sum(rewards[rewards!=None])
