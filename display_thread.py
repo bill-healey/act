@@ -51,21 +51,27 @@ class DisplayThread:
         plt.tight_layout()
         self.update_plot(key, fig)
 
-    def plot_train_validation_history(self, train_history, validation_history, num_epochs, key="train_val_plot"):
-        train_values = [summary['loss'] for summary in train_history]
-        val_values = [summary['loss'] for summary in validation_history]
-        epochs = np.linspace(0, num_epochs - 1, len(train_values))
+    def plot_train_validation_history(self, train_history, validation_history):
+        # Ensure the data is in NumPy format and on the CPU
+        train_values = [summary['loss'].cpu().numpy() if hasattr(summary['loss'], 'cpu') else summary['loss'] for
+                        summary in train_history]
+        val_values = [summary['loss'].cpu().numpy() if hasattr(summary['loss'], 'cpu') else summary['loss'] for
+                      summary in validation_history]
+
+        # Dynamically create epochs based on train_values
+        epochs = np.arange(len(train_values))
 
         plt.close()
-        fig = plt.figure(figsize=(16, 4))
+        fig = plt.figure(figsize=(16, 9))
+        # Plot the training and validation loss
         plt.plot(epochs, train_values, label="Train Loss")
-        plt.plot(epochs, val_values, label="Validation Loss")
+        plt.plot(epochs[:len(val_values)], val_values, label="Validation Loss")  # Match val_values length
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
         plt.legend()
         plt.title("Training vs. Validation Loss")
         plt.tight_layout()
-        self.update_plot(key, fig)
+        self.update_plot('train/validation', fig)
 
     def _combine_images(self, cameras, plots):
         camera_array = None

@@ -6,7 +6,6 @@ import cv2
 from dm_control import mujoco, viewer
 from dm_control.rl import control
 from teleop import TeleOpHandler
-from plot_handler import PlotHandler
 from constants import DT, XML_DIR, TASK_CONFIGS
 from velocity_pickup_task import PickupTask
 from tracker import MobileIOARTracker
@@ -27,7 +26,8 @@ def record_sim_teleop():
     task = PickupTask()
     teleop_handler = TeleOpHandler()
     teleop_handler.start()
-    plot_handler = PlotHandler(camera_names)
+    display_thread = DisplayThread()
+    display_thread.start()
     success = []
     env = control.Environment(physics, task, time_limit=episode_len, control_timestep=DT,
                               n_sub_steps=None, flat_observation=False)
@@ -39,7 +39,7 @@ def record_sim_teleop():
             action = task.control_input_to_action(teleop_handler, action)
             ts = env.step(action)
             episode.append(ts)
-            plot_handler.render_images(ts.observation['images'])
+            display_thread.update_frames(ts.observation['images'])
         episode_return = np.sum([ts.reward for ts in episode[1:]])
         episode_max_reward = np.max([ts.reward for ts in episode[1:]])
         success_status = episode_max_reward == env.task.max_reward
@@ -83,6 +83,7 @@ def record_sim_teleop():
                 root[name][...] = array
         del episode
     teleop_handler.stop()
+    display_thread.stop()
     print(f'Saved to {dataset_dir}')
     print(f'Success: {np.sum(success)} / {len(success)}')
 
@@ -138,11 +139,13 @@ def record_real_teleop():
             initial_pos = arm.get_position()
             ee_pos = dict(x=initial_pos.get('x', 0), y=initial_pos.get('y', 0),
                           z=initial_pos.get('z', 0), t=initial_pos.get('t', 0))
+            arm.set_led(50)
             episode_started = True
             for step in range(cfg['episode_len']):
                 t0 = time.time()
                 arm_pos = arm.get_position()
-                action = [ee_pos['x'], ee_pos['y'], ee_pos['z'], ee_pos['t']]
+                ee_action = [ee_pos['x'], ee_pos['y'], ee_pos['z'], ee_pos['t']]
+                action = [arm_pos['b'], arm_pos['s'], arm_pos['e'], arm_pos['t']]
                 frames = {}
                 for i, cam_name in enumerate(cfg['camera_names']):
                     ret, frame = caps[i].read()
@@ -150,9 +153,9 @@ def record_real_teleop():
                         frames[cam_name] = frame
                     else:
                         frames[cam_name] = None
-                ep_data.append({'arm_pos': arm_pos, 'action': action, 'images': frames})
+                ep_data.append({'arm_pos': arm_pos, 'action': action, 'ee_action': ee_action, 'images': frames})
                 display_thread.update_frames(frames)
-                display_thread.plot_action(ep_data)
+                #display_thread.plot_action(ep_data)
                 elapsed = time.time() - t0
                 if elapsed < DT:
                     time.sleep(DT - elapsed)
@@ -164,9 +167,11 @@ def record_real_teleop():
             success_flags.append(1 if success_flag == 'success' else 0)
             print(f"Episode {ep} complete -> Marked as {success_flag.upper()}")
             tracker.stop_tracking()
+            arm.set_led(0)
+            episode_started = False
 
             data_dict = {'/observations/qpos': [], '/observations/qvel': [],
-                         '/action': [], **{f'/observations/images/{c}': [] for c in cfg['camera_names']}}
+                         '/action': [], '/ee_action': [], **{f'/observations/images/{c}': [] for c in cfg['camera_names']}}
             prev_qpos = None
             for step in ep_data:
                 pos = step['arm_pos']
@@ -176,6 +181,7 @@ def record_real_teleop():
                 data_dict['/observations/qvel'].append(qvel)
                 prev_qpos = qpos
                 data_dict['/action'].append(step['action'])
+                data_dict['/ee_action'].append(step['ee_action'])
                 for c in cfg['camera_names']:
                     data_dict[f'/observations/images/{c}'].append(step['images'][c])
 
@@ -193,6 +199,7 @@ def record_real_teleop():
                 obs.create_dataset('qpos', (cfg['episode_len'], 4))
                 obs.create_dataset('qvel', (cfg['episode_len'], 4))
                 f.create_dataset('action', (cfg['episode_len'], cfg['action_len']))
+                f.create_dataset('ee_action', (cfg['episode_len'], cfg['action_len']))
                 for k, arr in data_dict.items():
                     if 'images' in k:
                         ds = f[k]

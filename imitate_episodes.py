@@ -18,8 +18,8 @@ from policy import ACTPolicy
 from visualize_episodes import save_videos
 from sim_record import PickupTask
 from constants import DT, XML_DIR
-from plot_handler import PlotHandler
 from roarm import RoArm
+from display_thread import DisplayThread
 
 from constants import TASK_CONFIGS
 from torch.profiler import profile, ProfilerActivity
@@ -34,14 +34,14 @@ def main(args):
     task_config = TASK_CONFIGS[task_name]
     str_train_params = '_'.join([str(task_config[k]) for k in [
         'episode_len',
-        'batch_size',
+        #'batch_size',
         'action_len',
-        'kl_weight',
+        #'kl_weight',
         'hidden_dim',
         'dim_feedforward',
-        'num_epochs',
+        #'num_epochs',
         'lr',
-        'seed',
+        #'seed',
     ]])
     config = dict(task_config, **{
                      'task_name': task_name,
@@ -60,7 +60,7 @@ def main(args):
     set_seed(task_config['seed'])
     torch.backends.cudnn.benchmark = True
     if config['is_eval']:
-        ckpt_names = [f'policy_best.ckpt']
+        ckpt_names = [f'policy_last.ckpt']
         results = []
         for ckpt_name in ckpt_names:
             success_rate, avg_return = eval_bc(config, ckpt_name, save_episode=True)
@@ -96,10 +96,11 @@ def main(args):
     #prof.export_chrome_trace("trace.json")
 
 
-def get_image(ts, camera_names):
+def get_image(obs, camera_names):
     curr_images = []
-    for cam_name in camera_names:
-        curr_image = rearrange(ts.observation['images'][cam_name], 'h w c -> c h w')
+    for i, cam_name in enumerate(camera_names):
+        frame = obs['images'][cam_name]
+        curr_image = rearrange(frame, 'h w c -> c h w')
         curr_images.append(curr_image)
     curr_image = np.stack(curr_images, axis=0)
     curr_image = torch.from_numpy(curr_image / 255.0).float().cuda().unsqueeze(0)
@@ -119,7 +120,9 @@ def eval_bc(config, ckpt_name, save_episode=True):
     ckpt_path = os.path.join(ckpt_dir, ckpt_name)
 
     policy = ACTPolicy(policy_config)
-    loading_status = policy.load_state_dict(torch.load(ckpt_path))
+    checkpoint = torch.load(ckpt_path)
+
+    loading_status = policy.load_state_dict(checkpoint['model_state_dict'])
     print(loading_status)
     policy.cuda()
     policy.eval()
@@ -133,6 +136,8 @@ def eval_bc(config, ckpt_name, save_episode=True):
     is_sim = ('sim' in task_name.lower())
     caps = None
     arm = None
+    display_thread = DisplayThread()
+    display_thread.start()
 
     if is_sim:
         xml_path = os.path.join(XML_DIR, config['mujoco_xml'])
@@ -141,8 +146,9 @@ def eval_bc(config, ckpt_name, save_episode=True):
         env = control.Environment(physics, task, time_limit=config['episode_len'], control_timestep=DT,
                                   n_sub_steps=None, flat_observation=False)
     else:
+        env = None
         arm = RoArm()
-        arm.set_led(180)
+        arm.set_led(50)
         caps = [cv2.VideoCapture(idx, cv2.CAP_DSHOW) for idx in config['camera_indexes']]
 
     if temporal_agg:
@@ -155,7 +161,6 @@ def eval_bc(config, ckpt_name, save_episode=True):
     num_rollouts = 50
     episode_returns = []
     highest_rewards = []
-    plot_handler = PlotHandler(policy_config['camera_names'])
     for rollout_id in range(num_rollouts):
         ts = None
         if is_sim:
@@ -166,6 +171,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
         qpos_history = torch.zeros((1, max_timesteps, state_dim)).cuda()
         image_list = []
         rewards = []
+        prev_qpos = None
         with torch.inference_mode():
             for t in range(max_timesteps):
                 if is_sim:
@@ -180,6 +186,8 @@ def eval_bc(config, ckpt_name, save_episode=True):
                             frames[cam_name] = None
                     pos = arm.get_position()
                     qpos = [pos['b'], pos['s'], pos['e'], pos['t']]
+                    if prev_qpos is None:
+                        prev_qpos = qpos
                     qvel = np.subtract(qpos, prev_qpos).tolist() if prev_qpos else [0] * 4
                     prev_qpos = qpos
                     obs = {
@@ -188,7 +196,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
                         'qvel': qvel,
                     }
                 if onscreen_render:
-                    plot_handler.render_images(obs['images'])
+                    display_thread.update_frames(obs['images'])
                 if 'images' in obs:
                     image_list.append(obs['images'])
                 else:
@@ -197,7 +205,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
                 qpos = pre_process(qpos_numpy)
                 qpos = torch.from_numpy(qpos).float().cuda().unsqueeze(0)
                 qpos_history[:, t] = qpos
-                curr_image = get_image(ts, camera_names)
+                curr_image = get_image(obs, camera_names)
 
                 if t % query_frequency == 0:
                     all_actions = policy(qpos, curr_image)
@@ -225,16 +233,20 @@ def eval_bc(config, ckpt_name, save_episode=True):
                     ts = env.step(target_qpos[-7:])
                     rewards.append(ts.reward)
                 else:
-                    b, s, e, t = action[0], action[1], action[2], action[3]
-                    arm.move_servos(b, s, e, t)
-                    rewards.append('TODO')
+                    print(arm.get_position()) # TODO: remove
+                    b, s, e, t = map(float, action[:4])
+                    arm.move_joints_to_position(b, s, e, t)
+                    #x, y, z, t = map(float, action[:4])
+                    #arm.move_to_position(x, y, z, t, direct=True)
+                    rewards.append(3)
 
         rewards = np.array(rewards)
-        episode_return = np.sum(rewards[rewards!=None])
+        episode_return = np.sum(rewards[rewards != None])
         episode_returns.append(episode_return)
         episode_highest_reward = np.max(rewards)
         highest_rewards.append(episode_highest_reward)
-        print(f'Rollout {rollout_id}\n{episode_return=}, {episode_highest_reward=}, {env.task.max_reward=}, Success: {episode_highest_reward==env.task.max_reward}')
+        max_reward = 5 if env is None else env.task.max_reward
+        print(f'Rollout {rollout_id}\n{episode_return=}, {episode_highest_reward=}, {max_reward=}, Success: {episode_highest_reward==max_reward}')
 
         if save_episode:
             save_videos(image_list, DT, video_path=os.path.join(ckpt_dir, f'video{rollout_id}-reward-{episode_highest_reward}.mp4'))
@@ -248,6 +260,7 @@ def eval_bc(config, ckpt_name, save_episode=True):
         summary_str += f'Reward >= {r}: {more_or_equal_r}/{num_rollouts} = {more_or_equal_r_rate*100}%\n'
 
     print(summary_str)
+    display_thread.stop()
 
     result_file_name = 'result_' + ckpt_name.split('.')[0] + '.txt'
     with open(os.path.join(ckpt_dir, result_file_name), 'w') as f:
@@ -279,8 +292,12 @@ def train_bc(train_dataloader, val_dataloader, config):
     device = torch.device("cuda:0")
     policy = policy.to(device)
 
+    display_thread = DisplayThread(image_size=(3840, 2160))
+    display_thread.start()
+
     # Check if there is an existing checkpoint to resume from
-    resume_ckpt_path = os.path.join(ckpt_dir, 'policy_last.ckpt')
+    #resume_ckpt_path = os.path.join(ckpt_dir, 'policy_last.ckpt')
+    resume_ckpt_path = os.path.join(ckpt_dir, 'policy_temp_best.ckpt')
     if os.path.exists(resume_ckpt_path):
         checkpoint = torch.load(resume_ckpt_path)
         start_epoch = checkpoint['epoch'] + 1
@@ -312,15 +329,7 @@ def train_bc(train_dataloader, val_dataloader, config):
             validation_history.append(epoch_summary)
 
             epoch_val_loss = epoch_summary['loss']
-            if epoch_val_loss < best_val_loss:
-                print(f"New Best Validation Loss {epoch_val_loss}")
-                best_val_loss = epoch_val_loss
-                best_ckpt_info = (epoch, best_val_loss, deepcopy(policy.state_dict()))
-                if epoch > min_next_ckpt_epoch:
-                    min_next_ckpt_epoch = epoch + 50
-                    ckpt_path = os.path.join(ckpt_dir, f'policy_seed_{seed}_temp_best.ckpt')
-                    torch.save(policy.state_dict(), ckpt_path)
-                    plot_history(train_history, validation_history, epoch, ckpt_dir, seed)
+            #display_thread.plot_train_validation_history(train_history, validation_history)
         print(f'Val loss:   {epoch_val_loss:.5f}')
         summary_string = ''
         for k, v in epoch_summary.items():
@@ -345,6 +354,22 @@ def train_bc(train_dataloader, val_dataloader, config):
             summary_string += f'{k}: {v.item():.3f} '
         print(summary_string)
 
+        if epoch_val_loss < best_val_loss:
+            print(f"New Best Validation Loss {epoch_val_loss}")
+            best_val_loss = epoch_val_loss
+            best_ckpt_info = (epoch, best_val_loss, deepcopy(policy.state_dict()))
+            if epoch > min_next_ckpt_epoch:
+                min_next_ckpt_epoch = epoch + 50
+                torch.save({
+                    'epoch': epoch,
+                    'best_val_loss': best_val_loss,
+                    'model_state_dict': policy.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'train_history': train_history,
+                    'validation_history': validation_history
+                }, os.path.join(ckpt_dir, f'policy_temp_best.ckpt'))
+                display_thread.plot_train_validation_history(train_history, validation_history)
+
     ckpt_path = os.path.join(ckpt_dir, f'policy_last.ckpt')
     torch.save({
         'epoch': epoch,
@@ -359,6 +384,8 @@ def train_bc(train_dataloader, val_dataloader, config):
     torch.save(best_state_dict, ckpt_path)
     print(f'Training finished:\nSeed {seed}, val loss {best_val_loss:.6f} at epoch {best_epoch}')
     plot_history(train_history, validation_history, num_epochs, ckpt_dir, seed)
+    #display_thread.plot_train_validation_history(train_history, validation_history)
+    #display_thread.stop()
     return best_ckpt_info
 
 

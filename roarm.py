@@ -103,7 +103,7 @@ class RoArm:
         """
         return self._send_command({"T": 105}, response_expected=True)
 
-    def move_to_position(self, x, y, z, t, spd=.1, **kwargs):
+    def move_to_position(self, x, y, z, t, direct=False, spd=.1, **kwargs):
         """
         Move to a specific end-effector position.
 
@@ -112,11 +112,25 @@ class RoArm:
             y (float, required): Y coordinate
             z (float, required): Z coordinate
             t (float, required): Gripper position
+            direct:  Non-blocking, no interpolation, no spd
             spd (float, optional): Movement speed
         """
         # Construct payload with only provided coordinates
-        payload = {"T": 104}
+        if direct:
+            # Non-blocking, no interpolation
+            payload = {"T": 1041}
+            spd = None
+        else:
+            payload = {"T": 104}
         for coord, value in [('x', x), ('y', y), ('z', z), ('t', t), ('spd', spd)]:
+            if value is not None:
+                payload[coord] = value
+
+        return self._send_command(payload)
+
+    def move_joints_to_position(self, b, s, e, t, spd=.01, **kwargs):
+        payload = {"T": 102}
+        for coord, value in [('base', b), ('shoulder', s), ('elbow', e), ('hand', t), ('spd', spd)]:
             if value is not None:
                 payload[coord] = value
 
